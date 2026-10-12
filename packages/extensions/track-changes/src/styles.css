@@ -1,0 +1,22 @@
+/* Track-changes (opt-in). Import only when the extension is enabled. */
+
+.editor-insertion {
+  background: color-mix(in srgb, #16a34a 22%, transparent);
+  border-bottom: 1px solid #16a34a;
+  border-radius: 2px;
+}
+
+.editor-deletion {
+  background: color-mix(in srgb, #dc2626 18%, transparent);
+  text-decoration: line-through;
+  text-decoration-color: #dc2626;
+  border-radius: 2px;
+}
+
+/* Margin attribution badge, if the host opts into showing it. */
+.editor-change-author {
+  font-size: 0.75em;
+  color: var(--editor-muted, #64748b);
+  vertical-align: super;
+  user-select: none;
+}

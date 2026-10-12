@@ -12,12 +12,14 @@
   "dependencies": {
     "@editor/core": "*",
     "@editor/extension-anchor": "*",
+    "@editor/extension-comments": "*",
     "@editor/extension-history": "*",
     "@editor/extension-image": "*",
     "@editor/extension-link": "*",
     "@editor/extension-paste-clean": "*",
     "@editor/extension-source-view": "*",
     "@editor/extension-styling": "*",
+    "@editor/extension-track-changes": "*",
     "@editor/sanitize": "*",
     "@editor/ui": "*"
   },

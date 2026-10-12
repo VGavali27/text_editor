@@ -304,3 +304,88 @@ Next.js (App Router, SSR-safe) example.
 2. Optional — Shiki highlighter in `SourceView`; link/anchor pickers.
 3. Phase 8 — docs, a11y audit, fuzz + e2e tests, v1.0.
 
+---
+
+## Session 6 — Phases 6–7: track-changes & comments (+ test harness)
+
+**Goal:** The heavy review features — Word-style suggestion mode and comment
+threads — built from scratch on `prosemirror-changeset`, plus the test
+infrastructure to prove the complex diffing logic works.
+
+### Test harness (new)
+
+- **Vitest 2 + jsdom** at the root (`vitest.config.ts`, `npm test`). Tests live
+  in `packages/**/test/*.test.ts` and run the real TipTap engine in a DOM.
+- **19 tests**, all green.
+
+### Track-changes (`@editor/extension-track-changes`)
+
+| Piece | Behaviour |
+|---|---|
+| `insertion` mark | Text typed while tracking is on; renders highlighted; carries `author` / `date` / `commentId` |
+| `deletion` mark | Deleted text is **kept** (struck through) until accepted; same attrs |
+| `appendTransaction` plugin | Builds a `ChangeSet` from the user transactions (`ChangeSet.create(oldDoc).addSteps(...)`), replays deletions as `deletion`-marked slices, and tags inserted ranges with `insertion` |
+| Commands | `setTrackChanges`, `acceptChanges` / `rejectChanges`, plus granular `acceptIns/Deletions` + `rejectIns/Deletions` |
+| Helpers | `collectTrackedChanges`, `countTrackedChanges`, `hasTrackedChanges` |
+
+**Design decisions**
+- Deletions are re-inserted with `tr.replaceRange(pos, pos, slice)` (not
+  `tr.insert`, which rejects a `Slice`).
+- Appended transactions are skipped via PM's own `appendedTransaction` meta
+  (plus a private `APPLIED_META`), so the plugin never re-processes its own work.
+- A `REVIEW_META` flag on accept/reject transactions prevents review actions
+  from being re-recorded as new changes.
+- Changes are applied end-to-start (descending `fromB`) so earlier positions
+  stay valid as the replayed deletions grow the document.
+- Toggle state lives in plugin state via a `PluginKey`, so it survives and is
+  readable from toolbar `isActive`.
+- Selection-scoped review: commands act on the selection, or the whole document
+  when the selection is empty.
+
+### Comments (`@editor/extension-comments`)
+
+| Piece | Behaviour |
+|---|---|
+| `comment` mark | `<span data-comment data-comment-id="…">`; the thread lives **outside** the document |
+| Storage | `CommentThread[]` (`id`, `author`, `date`, `body`, `replies`, `status`) with `subscribeComments()` / `onChange` |
+| Commands | `addComment`, `removeComment`, `resolveComment`, `reopenComment`, `replyToComment` |
+| Panel | `createCommentPanel()` — a sidebar that lists threads, selects their ranges, and resolves / reopens / deletes / replies |
+| Integration | Adding a comment over tracked changes stamps the thread id onto the `insertion`/`deletion` marks (`commentId`) |
+
+**Design decisions**
+- Thread data is stored separately and can be persisted independently of the
+  document; the doc only references thread ids.
+- The panel and helpers accept **either** the public `TextEditor` or the raw
+  engine (`getEngine()`), matching the `@editor/ui` convention.
+- Same-type marks with different attrs coexist in ProseMirror, so linking a
+  comment to a change does `removeMark` **then** `addMark` to replace it.
+- The comment mark uses `data-comment` (not `data-comment-id`) for its parse
+  rule, so it never mistakes a tracked-change span for a comment.
+
+### Sanitizer
+
+- `DEFAULT_ATTRIBUTES` now also allows `data-insertion`, `data-deletion`,
+  `data-author`, `data-date`, `data-comment`, `data-comment-id` so marked ranges
+  survive the paste/serialize gate. These are inert when the review extensions
+  are off.
+
+### Playground
+
+- Enables `TrackChanges({ author: 'You' })` and `Comments({ author: 'You' })`,
+  wires a **comment sidebar** (`createCommentPanel`) with dialog-backed comment
+  / reply prompts, and imports both packages' styles.
+
+### Verification
+
+- `npm test` — **19/19 pass** (track-changes × 11, comments × 8).
+- `npm run typecheck` — passes across **17** workspaces.
+- `npm run build --workspace @editor/playground` — succeeds
+  (~376 kB JS / ~121 kB gzip, ~7.5 kB CSS).
+- `npm run build --workspace @editor/next-example` — still succeeds.
+
+### Next up (from PLAN.md)
+
+1. Phase 8 — docs site, a11y audit, fuzz + e2e tests, v1.0 release.
+2. Optional — Shiki highlighter in `SourceView`; link/anchor pickers; a
+   change-list / gutter view.
+

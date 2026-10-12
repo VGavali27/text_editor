@@ -29,6 +29,10 @@ const DEFAULT_ATTRIBUTES = [
   'href', 'target', 'rel', 'title',
   'src', 'alt', 'width', 'height',
   'id', 'class',
+  // Used by the opt-in track-changes / comments extensions so marked ranges
+  // survive the paste/serialize gate. Inert when those extensions are off.
+  'data-insertion', 'data-deletion', 'data-author', 'data-date',
+  'data-comment', 'data-comment-id',
 ]
 
 function buildUriRegexp(schemes: string[]): RegExp {
