@@ -4,9 +4,12 @@ import { History } from '@editor/extension-history'
 import { ImageExtension } from '@editor/extension-image'
 import { Link } from '@editor/extension-link'
 import { normalizePastedHtml, PasteClean } from '@editor/extension-paste-clean'
+import { SourceView } from '@editor/extension-source-view'
 import { Styling } from '@editor/extension-styling'
 import { Sanitize } from '@editor/sanitize'
-import { createToolbar } from '@editor/ui'
+import { createBubbleToolbar, createToolbar, requestText } from '@editor/ui'
+import '@editor/ui/styles.css'
+import '@editor/extension-source-view/styles.css'
 import './style.css'
 
 const editorHost = document.getElementById('editor')
@@ -39,9 +42,28 @@ const editor = new TextEditor({
   extensions: [
     Styling(),
     History(),
-    Link(),
-    Anchor(),
-    ImageExtension({ upload: demoUpload }),
+    Link({
+      onRequestUrl: (current) =>
+        requestText({
+          title: 'Link',
+          label: 'URL',
+          value: current ?? 'https://',
+          placeholder: 'https://example.com',
+          allowEmpty: true,
+        }),
+    }),
+    Anchor({
+      onRequestName: (suggested) =>
+        requestText({ title: 'Anchor', label: 'Anchor name', value: suggested }),
+    }),
+    ImageExtension({
+      upload: demoUpload,
+      onRequestAlt: (current) =>
+        requestText({ title: 'Alt text', label: 'Alternative text', value: current ?? '', allowEmpty: true }),
+      onRequestCaption: (current) =>
+        requestText({ title: 'Caption', label: 'Caption', value: current ?? '', allowEmpty: true }),
+    }),
+    SourceView(),
     PasteClean(),
     Sanitize({ normalize: normalizePastedHtml }),
   ],
@@ -51,6 +73,13 @@ const editor = new TextEditor({
 })
 
 createToolbar(editor, toolbarHost)
+
+// Contextual bubble menu for the most-used inline actions.
+const bubbleNames = new Set(['bold', 'italic', 'underline', 'strike', 'link', 'unlink'])
+createBubbleToolbar(editor, {
+  items: editor.getToolbarItems().filter((item) => bubbleNames.has(item.name)),
+})
+
 output.textContent = editor.getHTML()
 
 window.addEventListener('beforeunload', () => editor.destroy())

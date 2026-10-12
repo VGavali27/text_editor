@@ -1,0 +1,179 @@
+/*!
+ * @editor/ui — default theme (light/dark via CSS variables).
+ * Import once: `import '@editor/ui/styles.css'`.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --editor-border: #d0d7de;
+  --editor-bg: #ffffff;
+  --editor-fg: #1f2328;
+  --editor-muted: #59636e;
+  --editor-accent: #0969da;
+  --editor-accent-fg: #ffffff;
+  --editor-active-bg: #ddf4ff;
+  --editor-surface: #ffffff;
+  --editor-radius: 8px;
+  --editor-shadow: 0 8px 24px rgba(31, 35, 40, 0.18);
+  --editor-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --editor-border: #30363d;
+    --editor-bg: #0d1117;
+    --editor-fg: #e6edf3;
+    --editor-muted: #9198a1;
+    --editor-accent: #2f81f7;
+    --editor-accent-fg: #ffffff;
+    --editor-active-bg: #1f3347;
+    --editor-surface: #0d1117;
+    --editor-shadow: 0 8px 24px rgba(1, 4, 9, 0.6);
+  }
+}
+
+/* ------------------------------------------------------------------ toolbar */
+
+.editor-toolbar,
+.editor-bubble {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: color-mix(in srgb, var(--editor-bg) 92%, var(--editor-border));
+  border: 1px solid var(--editor-border);
+  color: var(--editor-fg);
+}
+
+.editor-toolbar {
+  border-bottom: none;
+  border-radius: var(--editor-radius) var(--editor-radius) 0 0;
+}
+
+.editor-toolbar__button {
+  min-width: 2.25rem;
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--editor-fg);
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.editor-toolbar__button:hover:not(:disabled) {
+  border-color: var(--editor-accent);
+}
+
+.editor-toolbar__button.is-active {
+  background: var(--editor-active-bg);
+  border-color: var(--editor-accent);
+  color: var(--editor-accent);
+}
+
+.editor-toolbar__button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.editor-toolbar__separator {
+  align-self: stretch;
+  width: 1px;
+  margin: 0 0.15rem;
+  background: var(--editor-border);
+}
+
+/* ------------------------------------------------------------- bubble menu */
+
+.editor-bubble {
+  position: absolute;
+  z-index: 40;
+  border-radius: var(--editor-radius);
+  box-shadow: var(--editor-shadow);
+  transform: translate(-50%, -100%);
+}
+
+.editor-bubble[hidden] {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ dialog */
+
+.editor-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(31, 35, 40, 0.45);
+}
+
+.editor-dialog {
+  width: min(26rem, 100%);
+  padding: 1.25rem;
+  background: var(--editor-surface);
+  color: var(--editor-fg);
+  border: 1px solid var(--editor-border);
+  border-radius: var(--editor-radius);
+  box-shadow: var(--editor-shadow);
+}
+
+.editor-dialog__title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.editor-dialog__field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.editor-dialog__label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--editor-muted);
+}
+
+.editor-dialog__input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  color: var(--editor-fg);
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+}
+
+.editor-dialog__input:focus {
+  outline: 2px solid var(--editor-accent);
+  outline-offset: 1px;
+}
+
+.editor-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.editor-dialog__button {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--editor-fg);
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.editor-dialog__button--primary {
+  color: var(--editor-accent-fg);
+  background: var(--editor-accent);
+  border-color: var(--editor-accent);
+}

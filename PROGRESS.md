@@ -197,3 +197,54 @@ adapter, drag-drop + paste upload, resize handles, and alt/caption editing.
 2. Phase 5 — React/Vue adapters.
 3. Phases 6–7 — track-changes and comments (self-built on `prosemirror-changeset`).
 
+---
+
+## Session 4 — Phase 4: UI layer (theming, dialogs, bubble toolbar, source view)
+
+**Goal:** Give the opt-in extensions a real UI shell — a default theme,
+accessible dialogs, a contextual bubble menu, and an HTML source mode.
+
+### What was built
+
+| Area | Path | Purpose |
+|---|---|---|
+| Theming | `packages/ui/src/styles.css` | CSS-variable theme (light/dark via `prefers-color-scheme`); toolbar, bubble, and dialog styling. Exported as `@editor/ui/styles.css` |
+| Dialogs | `packages/ui/src/index.ts` | `openDialog()` modal primitive (focus trap, Esc, backdrop, scroll lock, ARIA) and `requestText()` promise-based text prompt |
+| Bubble menu | `packages/ui/src/index.ts` | `createBubbleToolbar()` — floats above a non-empty selection, shares button rendering with `createToolbar()` |
+| Toolbar | `packages/ui/src/index.ts` | Group separators between `ToolbarItem.group`s; shared button/refresh renderer |
+| Source view | `packages/extensions/source-view` | `SourceView()` — swaps the WYSIWYG surface for a synced textarea; `highlight` hook (Shiki-compatible), optional `sanitize` on exit; `enterSourceView` / `exitSourceView` / `isSourceView` helpers + `styles.css` |
+
+### Wiring the async inputs
+
+- `link`, `anchor`, and `image` request hooks now accept
+  `… | Promise<… | null>` and are awaited internally, so a real dialog can back
+  them. The playground passes `requestText(...)` for link URL, anchor name, image
+  alt, and image caption — no more `window.prompt`.
+- Toolbar `run` stays typed `void`; async work is kicked off inside each
+  extension (`void (async () => …)()`).
+- Removed the toolbar's post-click `editor.focus()` — commands already focus the
+  editor, and forcing it blurred dialogs opened by a command.
+
+### Design decisions / deviations
+
+- **No Radix UI.** Radix is React-only; this `ui` package is framework-agnostic
+  and vanilla (consistent with `createToolbar`). Built the dialog/focus-trap
+  directly instead, so no React dependency leaks into core.
+- **No Shiki dependency (yet).** Shiki is heavy and async/wasm-based; rather than
+  risk the build, `SourceView` exposes a Shiki-compatible `highlight(code) =>
+  html` hook. The overlay (transparent textarea over a highlighted layer) is
+  implemented; without a hook the source view is a plain monospace textarea.
+
+### Verification
+
+- `npm run typecheck` — passes across **12** workspaces.
+- `npm run build --workspace @editor/playground` — succeeds; workspace CSS
+  imports resolve and are bundled (~358 kB JS / ~115 kB gzip, ~5.5 kB CSS).
+
+### Next up (from PLAN.md)
+
+1. Phase 5 — React/Vue adapters (`packages/adapters/react`, `packages/adapters/vue`).
+2. Optional — wire a Shiki highlighter into `SourceView` and pickers for
+   links/anchors.
+3. Phases 6–7 — track-changes and comments (self-built on `prosemirror-changeset`).
+

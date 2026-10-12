@@ -30,11 +30,13 @@ export interface ImageOptions {
   /** Allow `data:` URLs (base64). Defaults to `false`. */
   allowBase64?: boolean
   /** Ask the host for an image URL (toolbar insert when no upload adapter). */
-  onRequestUrl?: (currentUrl?: string) => string | null
+  onRequestUrl?: (currentUrl?: string) => string | null | Promise<string | null>
   /** Ask the host for alt text. Defaults to `window.prompt`. */
-  onRequestAlt?: (currentAlt: string | undefined) => string | null
+  onRequestAlt?: (currentAlt: string | undefined) => string | null | Promise<string | null>
   /** Ask the host for a caption. Defaults to `window.prompt`. */
-  onRequestCaption?: (currentCaption: string | undefined) => string | null
+  onRequestCaption?: (
+    currentCaption: string | undefined,
+  ) => string | null | Promise<string | null>
 }
 
 declare module '@tiptap/core' {
@@ -394,9 +396,12 @@ export function ImageExtension(options: ImageOptions = {}): TextEditorExtension 
           pickAndUpload(e, options.upload, options.accept ?? 'image/*')
           return
         }
-        const request = options.onRequestUrl ?? ((current?: string) => promptFor('Image URL', current ?? 'https://'))
-        const url = request(undefined)
-        if (url && url.trim()) insertImage(e, { src: url.trim() })
+        const request =
+          options.onRequestUrl ?? ((current?: string) => promptFor('Image URL', current ?? 'https://'))
+        void (async () => {
+          const url = await request(undefined)
+          if (url && url.trim()) insertImage(e, { src: url.trim() })
+        })()
       },
     },
     {
@@ -406,9 +411,12 @@ export function ImageExtension(options: ImageOptions = {}): TextEditorExtension 
       isEnabled: (e) => e.isActive('image'),
       run: (e) => {
         const current = (e.getAttributes('image').alt as string | undefined) ?? ''
-        const request = options.onRequestAlt ?? ((alt: string | undefined) => promptFor('Alt text', alt ?? ''))
-        const alt = request(current)
-        if (alt != null) e.chain().focus().setImageAlt(alt).run()
+        const request =
+          options.onRequestAlt ?? ((alt: string | undefined) => promptFor('Alt text', alt ?? ''))
+        void (async () => {
+          const alt = await request(current)
+          if (alt != null) e.chain().focus().setImageAlt(alt).run()
+        })()
       },
     },
     {
@@ -418,9 +426,12 @@ export function ImageExtension(options: ImageOptions = {}): TextEditorExtension 
       isEnabled: (e) => e.isActive('image'),
       run: (e) => {
         const current = (e.getAttributes('image').caption as string | undefined) ?? ''
-        const request = options.onRequestCaption ?? ((cap: string | undefined) => promptFor('Caption', cap ?? ''))
-        const caption = request(current)
-        if (caption != null) e.chain().focus().setImageCaption(caption).run()
+        const request =
+          options.onRequestCaption ?? ((cap: string | undefined) => promptFor('Caption', cap ?? ''))
+        void (async () => {
+          const caption = await request(current)
+          if (caption != null) e.chain().focus().setImageCaption(caption).run()
+        })()
       },
     },
   ]

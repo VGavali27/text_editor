@@ -16,10 +16,13 @@ export interface AnchorOptions {
   /** Extra attributes applied to every rendered anchor. */
   htmlAttributes?: Record<string, string>
   /**
-   * Ask the host for the anchor name. Return `null` to cancel. Defaults to a
-   * `window.prompt` seeded with a slug of the selected text.
+   * Ask the host for the anchor name. Return `null` to cancel. May be async.
+   * Defaults to a `window.prompt` seeded with a slug of the selected text.
    */
-  onRequestName?: (suggested: string, taken: readonly string[]) => string | null
+  onRequestName?: (
+    suggested: string,
+    taken: readonly string[],
+  ) => string | null | Promise<string | null>
 }
 
 /**
@@ -135,11 +138,13 @@ function insertAnchor(editor: TiptapEditor, options: AnchorOptions): void {
   const taken = collectAnchorIds(editor)
 
   const request = options.onRequestName ?? ((name: string) => defaultRequestName(name))
-  const requested = request(suggested, taken)
-  if (requested == null) return
+  void (async () => {
+    const requested = await request(suggested, taken)
+    if (requested == null) return
 
-  const id = uniqueId(slugify(requested), taken)
-  editor.chain().focus().setAnchor({ id }).run()
+    const id = uniqueId(slugify(requested), taken)
+    editor.chain().focus().setAnchor({ id }).run()
+  })()
 }
 
 /**

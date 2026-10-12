@@ -1,15 +1,8 @@
-:root {
-  color-scheme: light dark;
-  --editor-border: #d0d7de;
-  --editor-bg: #ffffff;
-  --editor-fg: #1f2328;
-  --editor-accent: #0969da;
-  --editor-active-bg: #ddf4ff;
-}
-
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--editor-bg);
+  color: var(--editor-fg);
 }
 
 .demo {
@@ -18,44 +11,7 @@ body {
   padding: 2rem 1rem;
 }
 
-.editor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border: 1px solid var(--editor-border);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  background: color-mix(in srgb, var(--editor-bg) 92%, var(--editor-border));
-}
-
-.editor-toolbar__button {
-  min-width: 2.25rem;
-  padding: 0.35rem 0.6rem;
-  font: inherit;
-  font-size: 0.85rem;
-  color: var(--editor-fg);
-  background: var(--editor-bg);
-  border: 1px solid var(--editor-border);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.editor-toolbar__button:hover:not(:disabled) {
-  border-color: var(--editor-accent);
-}
-
-.editor-toolbar__button.is-active {
-  background: var(--editor-active-bg);
-  border-color: var(--editor-accent);
-  color: var(--editor-accent);
-}
-
-.editor-toolbar__button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
+/* The editor mount. Toolbar/bubble/dialog styling comes from @editor/ui. */
 .editor-surface {
   padding: 1rem;
   min-height: 240px;
@@ -68,6 +24,8 @@ body {
 .editor-surface :focus {
   outline: none;
 }
+
+/* ------------------------------------------------------------------- images */
 
 .editor-image {
   position: relative;
@@ -117,6 +75,8 @@ body {
   border-radius: 6px;
 }
 
+/* ------------------------------------------------------------------ anchors */
+
 .editor-anchor {
   display: inline-block;
   width: 1px;
@@ -124,6 +84,8 @@ body {
   background: var(--editor-accent);
   vertical-align: baseline;
 }
+
+/* ------------------------------------------------------------------- output */
 
 .output {
   margin-top: 1.5rem;

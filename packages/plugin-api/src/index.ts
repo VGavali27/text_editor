@@ -16,7 +16,10 @@ export interface ToolbarItem {
   isActive?: (editor: TiptapEditor) => boolean
   /** Whether the control can currently be used. */
   isEnabled?: (editor: TiptapEditor) => boolean
-  /** Execute the command. */
+  /**
+   * Execute the command. Async work should be kicked off internally (the UI
+   * does not await it), e.g. `void (async () => { … })()`.
+   */
   run: (editor: TiptapEditor) => void
 }
 

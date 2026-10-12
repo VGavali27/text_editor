@@ -12,10 +12,10 @@ export interface LinkOptions {
   htmlAttributes?: Record<string, string>
   /**
    * Ask the host for a URL for the current selection. Return `null` to cancel,
-   * an empty string to remove the link, or a URL to apply it. Defaults to a
-   * `window.prompt`; a real dialog can be supplied by the host (Phase 4 UI).
+   * an empty string to remove the link, or a URL to apply it. May be async
+   * (e.g. a dialog). Defaults to `window.prompt`.
    */
-  onRequestUrl?: (currentHref: string | undefined) => string | null
+  onRequestUrl?: (currentHref: string | undefined) => string | null | Promise<string | null>
 }
 
 function defaultRequestUrl(currentHref?: string): string | null {
@@ -35,20 +35,22 @@ function normalizeHref(raw: string): string {
 
 function applyLink(
   editor: TiptapEditor,
-  request: (currentHref: string | undefined) => string | null,
+  request: (currentHref: string | undefined) => string | null | Promise<string | null>,
 ): void {
   const current = editor.getAttributes('link').href as string | undefined
-  const requested = request(current)
-  if (requested == null) return
+  void (async () => {
+    const requested = await request(current)
+    if (requested == null) return
 
-  const href = normalizeHref(requested)
-  const chain = editor.chain().focus().extendMarkRange('link')
+    const href = normalizeHref(requested)
+    const chain = editor.chain().focus().extendMarkRange('link')
 
-  if (!href) {
-    chain.unsetLink().run()
-  } else {
-    chain.setLink({ href }).run()
-  }
+    if (!href) {
+      chain.unsetLink().run()
+    } else {
+      chain.setLink({ href }).run()
+    }
+  })()
 }
 
 /**

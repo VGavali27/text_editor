@@ -16,6 +16,7 @@
     "@editor/extension-image": "*",
     "@editor/extension-link": "*",
     "@editor/extension-paste-clean": "*",
+    "@editor/extension-source-view": "*",
     "@editor/extension-styling": "*",
     "@editor/sanitize": "*",
     "@editor/ui": "*"
