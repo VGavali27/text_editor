@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--editor-bg);
+  color: var(--editor-fg);
+}
+
+.demo {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.muted {
+  color: var(--editor-muted);
+}
+
+.editor-surface {
+  padding: 1rem;
+  min-height: 200px;
+  border: 1px solid var(--editor-border);
+  border-radius: 0 0 8px 8px;
+  background: var(--editor-bg);
+  color: var(--editor-fg);
+}
+
+.editor-surface :focus {
+  outline: none;
+}
+
+.output {
+  margin-top: 1.5rem;
+}
+
+.output pre {
+  padding: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--editor-bg) 92%, var(--editor-border));
+}

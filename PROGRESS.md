@@ -248,3 +248,59 @@ accessible dialogs, a contextual bubble menu, and an HTML source mode.
    links/anchors.
 3. Phases 6–7 — track-changes and comments (self-built on `prosemirror-changeset`).
 
+---
+
+## Session 5 — Phase 5: React, Vue, and Next.js adapters
+
+**Goal:** Ship framework adapters (`<Editor />` + `useEditor`) plus a working
+Next.js (App Router, SSR-safe) example.
+
+### What was built
+
+| Package / app | Path | Purpose |
+|---|---|---|
+| `@editor/adapter-react` | `packages/adapters/react` | `useEditor()` hook + `<Editor />` component; SSR-safe; carries `"use client"`; README with Next.js guide |
+| `@editor/adapter-vue` | `packages/adapters/vue` | `useEditor()` composable + `<Editor />` component (`defineComponent` + render fn) |
+| `@editor/next-example` | `apps/next-example` | Next.js 14 App Router demo: server page + `'use client'` editor island |
+
+### Design decisions
+
+- **SSR-safe by construction.** Both adapters create the `TextEditor` inside an
+  effect/lifecycle hook (`useEffect` / `onMounted`), so the server (and the
+  first client render) produce an empty host element — no `document` access
+  during render, no hydration mismatch.
+- **`"use client"` directive** on the React adapter entry, so it can be imported
+  directly from a Next.js App Router client component.
+- **Options are captured once.** `useEditor` uses the first render's options to
+  build the instance (kept in a ref) so re-renders never clobber user edits;
+  imperative updates go through the returned `editor`.
+- **Next.js integration**: `transpilePackages` for the TS-sourced workspace
+  packages; theme CSS imported in the root layout; the example also demonstrates
+  `next/dynamic` (`ssr: false`) in the README for consumers who want the editor
+  fully out of the SSR bundle.
+- **No SFC/JSX build needed for Vue** — the component is authored with `h()`, so
+  no `@vue/compiler-sfc` step is required.
+- React is a `peerDependency` (`>=18`); Vue is `^3.4.0`.
+
+### Verification
+
+- `npm run typecheck` — passes across **15** workspaces.
+- `npm run build --workspace @editor/next-example` — **succeeds**: Next.js
+  `14.2.35` compiles, type-checks, and statically prerenders `/` (the editor
+  mounts as a client island).
+- `npm install` added React 18, Vue 3.5, and Next 14.
+
+### Known notes
+
+- `npm audit` now reports 2 advisories in the **Next.js tooling tree** (a
+  `next` critical and a `postcss` high). These come from the example's dev
+  toolchain, not the editor runtime; fixing them means a breaking Next major, so
+  they are left for now (consistent with the existing dev-tree notes).
+
+### Next up (from PLAN.md)
+
+1. Phases 6–7 — **track-changes** and **comments** (self-built on
+   `prosemirror-changeset`); the heavy, opt-in review features.
+2. Optional — Shiki highlighter in `SourceView`; link/anchor pickers.
+3. Phase 8 — docs, a11y audit, fuzz + e2e tests, v1.0.
+
