@@ -68,6 +68,7 @@ export function createToolbar(
 ): ToolbarHandle {
   element.classList.add('editor-toolbar')
   element.setAttribute('role', 'toolbar')
+  element.setAttribute('aria-orientation', 'horizontal')
 
   const controls = mountItems(editor, element, items)
   const refresh = (): void => refreshItems(editor, controls)
@@ -106,6 +107,7 @@ export function createBubbleToolbar(
   const element = document.createElement('div')
   element.className = 'editor-bubble'
   element.setAttribute('role', 'toolbar')
+  element.setAttribute('aria-orientation', 'horizontal')
   element.hidden = true
   document.body.appendChild(element)
 

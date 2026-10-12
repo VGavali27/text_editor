@@ -389,3 +389,97 @@ infrastructure to prove the complex diffing logic works.
 2. Optional — Shiki highlighter in `SourceView`; link/anchor pickers; a
    change-list / gutter view.
 
+---
+
+## Session 7 — Phase 8: docs, a11y, fuzz + integration tests, v1.0
+
+**Goal:** Harden for release: documentation, an accessibility pass, fuzz + DOM
+integration tests, and a v1.0.0 release.
+
+### Documentation
+
+| File | Purpose |
+|---|---|
+| `README.md` | Overview, principles, quick start, repo layout, extension table, frameworks, security, commands |
+| `docs/architecture.md` | Layers, the extension contract, `TextEditor`, the two-stage clipboard pipeline, adapters, build/resolution, testing |
+| `docs/extensions.md` | Every extension's options, commands and helpers |
+| `docs/review.md` | Track-changes + comments deep dive (model, commands, linking, a11y, persistence) |
+| `docs/security.md` | The gate, allowlist, deterministic scheme enforcement, defence in depth |
+| `docs/theming.md` | CSS tokens, overriding, per-feature stylesheets |
+
+### Accessibility audit & fixes
+
+- **Comment panel** is now a labelled `role="region"` (`aria-label="Comments"`)
+  with `aria-live="polite"`; the thread list is labelled; each per-thread control
+  gets a unique accessible name (e.g. *"Resolve — comment by Alice"*); the
+  click-only `<p>` body was replaced with a real **Show** button (keyboard
+  operable); `<time>` now carries a `datetime`.
+- **Toolbars** declare `aria-orientation="horizontal"` (buttons already exposed
+  `aria-pressed`).
+- New a11y assertions (`apps/playground/test/a11y.test.ts`, 8 tests) cover the
+  toolbar, bubble toolbar, dialog (modal/label/focus-restore/Esc/Tab-trap),
+  `requestText`, and the comment panel.
+
+### Tests
+
+- `packages/sanitize/test/sanitize.test.ts` — 45 tests: an OWASP-style XSS
+  payload set, allowlist behaviour, `enforceUriAllowlist`, and **deterministic
+  fuzzing** (seeded PRNG). Output is parsed back into the DOM and asserted inert
+  (no dangerous elements, no `on*` attributes, no unsafe schemes) instead of
+  naive string matching.
+- `packages/extensions/paste-clean/test/paste-clean.test.ts` — 12 tests:
+  `normalizePastedHtml` (Word/Office junk, spans, drops, nbsp) and
+  `cleanPastedSlice` (blank edges, foreign marks, open slices), plus malformed
+  input that must never throw.
+- `apps/playground/test/integration.test.ts` — 8 tests exercising the full
+  extension stack in a real engine: styling, the sanitize + paste-clean paste
+  gates, image + anchor insertion, comment lifecycle, track + accept/reject, and
+  source-view + undo/redo round-trips.
+- Vitest `include` now also matches `apps/**/test/**`.
+
+### Bugs found & fixed by the new tests
+
+- **Sanitizer scheme bypass.** DOMPurify keeps `data:` URIs on a few tags
+  regardless of `ALLOWED_URI_REGEXP`; a mutated payload slipped through. Added
+  `enforceUriAllowlist`, run as a scoped `afterSanitizeAttributes` hook, which
+  strips any URL attribute whose scheme is not explicitly allowlisted (handling
+  obfuscating whitespace/control characters). `data:` on `img` is now blocked by
+  default and only permitted when allowlisted.
+- **Image extension dropped `setImage`.** `EditorImage.addCommands()` overrode
+  the parent without spreading it, shadowing the base `setImage` command. It now
+  spreads `this.parent?.()` before adding `setImageAlt` / `setImageCaption` /
+  `setImageSize`.
+
+### Release
+
+- All 18 `package.json` files (and the root) bumped to **1.0.0**.
+- Added MIT `LICENSE` and `CHANGELOG.md` (Keep a Changelog format).
+- Added `.github/workflows/ci.yml`: `npm ci` → typecheck → test → build
+  playground → build Next.js example.
+
+### Design decisions / deviations
+
+- **jsdom instead of Playwright for DOM integration.** The tests run the real
+  TipTap/ProseMirror engine in jsdom (typing, paste gates, images, anchors,
+  comments, tracking, undo, source view). Playwright would add a browser-binary
+  download to CI; the jsdom suite already covers the plan's DOM-integration
+  checklist without it.
+- **Hand-written docs instead of generated TypeDoc.** A small `docs/` set and a
+  curated README document the public API directly, avoiding a heavy doc-build
+  dependency; the source is heavily JSDoc-annotated for editors.
+
+### Verification
+
+- `npm test` — **92/92 pass** (sanitize 45, paste-clean 12, track-changes 11,
+  comments 8, integration 8, a11y 8).
+- `npm run typecheck` — passes across **17** workspaces.
+- `npm run build --workspace @editor/playground` — succeeds
+  (~377 kB JS / ~122 kB gzip, ~7.5 kB CSS).
+- `npm run build --workspace @editor/next-example` — succeeds (prerenders `/`).
+
+### Next up (from PLAN.md)
+
+1. Optional — Shiki highlighter in `SourceView`; link/anchor pickers; a
+   change-list / gutter view for tracked changes.
+2. Optional — Playwright e2e/visual snapshots on top of the jsdom suite.
+

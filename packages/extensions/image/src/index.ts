@@ -229,6 +229,9 @@ export const EditorImage = Image.extend<NodeImageOptions>({
 
   addCommands() {
     return {
+      // Keep the base `setImage` command from @tiptap/extension-image; defining
+      // only the extras here would otherwise shadow it.
+      ...(this.parent?.() ?? {}),
       setImageAlt:
         (alt: string) =>
         ({ commands }) =>

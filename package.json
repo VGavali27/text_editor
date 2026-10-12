@@ -1,6 +1,6 @@
 {
   "name": "text-editor",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Modular WYSIWYG rich-text editor library (opt-in extensions)",
   "workspaces": [

@@ -40,20 +40,60 @@ function buildUriRegexp(schemes: string[]): RegExp {
   return new RegExp(`^(?:(?:${list}):|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i')
 }
 
+/** Attributes whose values are URLs and must therefore match the allowlist. */
+const URI_ATTRIBUTES = [
+  'href', 'src', 'xlink:href', 'action', 'formaction', 'poster',
+  'background', 'cite', 'data', 'srcdoc', 'longdesc',
+]
+
+/** Whitespace / control characters used to obfuscate schemes (`java\tscript:`). */
+const OBFUSCATING_CHARS = /[\u0000-\u0020\u007f-\u009f]/g
+
+/**
+ * Remove every URL attribute whose scheme is not allowlisted. DOMPurify keeps
+ * `data:` URIs on a handful of tags (img, source, …) by default regardless of
+ * `ALLOWED_URI_REGEXP`, so this closes that gap — and any other disallowed
+ * scheme — deterministically, on the already-sanitized node.
+ */
+export function enforceUriAllowlist(element: Element, schemes: readonly string[]): void {
+  const allowed = schemes.map((scheme) => scheme.toLowerCase())
+  for (const name of URI_ATTRIBUTES) {
+    const value = element.getAttribute(name)
+    if (value == null) continue
+    const match = /^([a-z][a-z0-9+.-]*):/i.exec(value.replace(OBFUSCATING_CHARS, ''))
+    if (match && !allowed.includes(match[1]!.toLowerCase())) {
+      element.removeAttribute(name)
+    }
+  }
+}
+
 /**
  * Sanitize an HTML string against a strict allowlist. Runs on paste and on
- * serialization. Blocks `javascript:` and other unsafe URL schemes.
+ * serialization. Blocks `javascript:`, `data:` and other unsafe URL schemes.
  */
 export function sanitizeHtml(html: string, config: SanitizeConfig = {}): string {
   const allowedSchemes = config.allowedSchemes ?? ['http', 'https', 'mailto', 'tel']
   const input = config.normalize ? config.normalize(html) : html
-  const result = DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: config.allowedTags ?? DEFAULT_TAGS,
-    ALLOWED_ATTR: config.allowedAttributes ?? DEFAULT_ATTRIBUTES,
-    ALLOWED_URI_REGEXP: buildUriRegexp(allowedSchemes),
-    ALLOW_DATA_ATTR: false,
-  })
-  return typeof result === 'string' ? result : String(result)
+
+  const guard = (node: Node): void => {
+    if (typeof (node as Element).getAttribute !== 'function') return
+    enforceUriAllowlist(node as Element, allowedSchemes)
+  }
+  const canHook =
+    typeof DOMPurify.addHook === 'function' && typeof DOMPurify.removeHook === 'function'
+
+  if (canHook) DOMPurify.addHook('afterSanitizeAttributes', guard)
+  try {
+    const result = DOMPurify.sanitize(input, {
+      ALLOWED_TAGS: config.allowedTags ?? DEFAULT_TAGS,
+      ALLOWED_ATTR: config.allowedAttributes ?? DEFAULT_ATTRIBUTES,
+      ALLOWED_URI_REGEXP: buildUriRegexp(allowedSchemes),
+      ALLOW_DATA_ATTR: false,
+    })
+    return typeof result === 'string' ? result : String(result)
+  } finally {
+    if (canHook) DOMPurify.removeHook('afterSanitizeAttributes')
+  }
 }
 
 /**

@@ -46,17 +46,29 @@ export function createCommentPanel(
 
   const root = doc.createElement('div')
   root.className = 'editor-comments'
+  root.setAttribute('role', 'region')
+  root.setAttribute('aria-label', 'Comments')
+  // Announce added / resolved / removed threads to assistive tech.
+  root.setAttribute('aria-live', 'polite')
 
   const selectThread = (thread: CommentThread): void => {
     const ranges = getCommentRanges(engine.state.doc, thread.id)
     if (ranges.length) engine.chain().focus().setTextSelection(ranges[0]!).run()
   }
 
-  const button = (label: string, onClick: () => void, extraClass = ''): HTMLButtonElement => {
+  const button = (
+    label: string,
+    onClick: () => void,
+    extraClass = '',
+    ariaLabel?: string,
+  ): HTMLButtonElement => {
     const node = doc.createElement('button')
     node.type = 'button'
     node.className = `editor-comments__action ${extraClass}`.trim()
     node.textContent = label
+    // Give each control a unique accessible name (several threads repeat the
+    // same visible labels), e.g. "Resolve — comment by Alice".
+    if (ariaLabel) node.setAttribute('aria-label', ariaLabel)
     node.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
@@ -80,13 +92,19 @@ export function createCommentPanel(
     const date = doc.createElement('time')
     date.className = 'editor-comments__date'
     date.textContent = formatDate(thread.date)
+    if (Number.isFinite(thread.date)) {
+      try {
+        date.setAttribute('datetime', new Date(thread.date).toISOString())
+      } catch {
+        /* ignore invalid timestamps */
+      }
+    }
 
     header.append(author, date)
 
     const body = doc.createElement('p')
     body.className = 'editor-comments__body'
     body.textContent = thread.body
-    body.addEventListener('click', () => selectThread(thread))
 
     item.append(header, body)
 
@@ -105,18 +123,35 @@ export function createCommentPanel(
 
     const actions = doc.createElement('div')
     actions.className = 'editor-comments__actions'
+    const who = `comment by ${thread.author}`
     actions.append(
-      button('Reply', () => {
-        void (async () => {
-          const value = await requestReply(thread)
-          if (value == null || !value.trim()) return
-          engine.commands.replyToComment(thread.id, value.trim())
-        })()
-      }),
+      button(
+        'Show',
+        () => selectThread(thread),
+        '',
+        `Show ${who} in the document`,
+      ),
+      button(
+        'Reply',
+        () => {
+          void (async () => {
+            const value = await requestReply(thread)
+            if (value == null || !value.trim()) return
+            engine.commands.replyToComment(thread.id, value.trim())
+          })()
+        },
+        '',
+        `Reply to ${who}`,
+      ),
       thread.status === 'open'
-        ? button('Resolve', () => engine.commands.resolveComment(thread.id))
-        : button('Reopen', () => engine.commands.reopenComment(thread.id)),
-      button('Delete', () => engine.commands.removeComment(thread.id), 'editor-comments__action--danger'),
+        ? button('Resolve', () => engine.commands.resolveComment(thread.id), '', `Resolve ${who}`)
+        : button('Reopen', () => engine.commands.reopenComment(thread.id), '', `Reopen ${who}`),
+      button(
+        'Delete',
+        () => engine.commands.removeComment(thread.id),
+        'editor-comments__action--danger',
+        `Delete ${who}`,
+      ),
     )
     item.appendChild(actions)
 
@@ -144,6 +179,7 @@ export function createCommentPanel(
     } else {
       const list = doc.createElement('ul')
       list.className = 'editor-comments__list'
+      list.setAttribute('aria-label', 'Comment threads')
       for (const thread of threads) list.appendChild(renderThread(thread))
       root.appendChild(list)
     }
