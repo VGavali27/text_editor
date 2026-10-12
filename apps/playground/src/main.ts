@@ -8,8 +8,9 @@ import { normalizePastedHtml, PasteClean } from '@editor/extension-paste-clean'
 import { SourceView } from '@editor/extension-source-view'
 import { Styling } from '@editor/extension-styling'
 import { TrackChanges } from '@editor/extension-track-changes'
-import { Sanitize } from '@editor/sanitize'
-import { createBubbleToolbar, createToolbar, requestText } from '@editor/ui'
+import { sanitizeHtml, Sanitize } from '@editor/sanitize'
+import { createBubbleToolbar, createMenuBar, createToolbar, requestText } from '@editor/ui'
+import type { Menu } from '@editor/ui'
 import '@editor/ui/styles.css'
 import '@editor/extension-source-view/styles.css'
 import '@editor/extension-track-changes/styles.css'
@@ -18,6 +19,7 @@ import './style.css'
 
 const editorHost = document.getElementById('editor')
 const toolbarHost = document.getElementById('toolbar')
+const menubarHost = document.getElementById('menubar')
 const output = document.getElementById('output')
 const commentsHost = document.getElementById('comments')
 
@@ -37,6 +39,16 @@ async function demoUpload(file: File): Promise<{ src: string; alt?: string }> {
     reader.readAsDataURL(file)
   })
   return { src, alt: file.name.replace(/\.[^.]+$/, '') }
+}
+
+/** Download a string as a file from the browser. */
+function download(filename: string, data: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([data], { type }))
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
 }
 
 const editor = new TextEditor({
@@ -89,6 +101,103 @@ const editor = new TextEditor({
 })
 
 createToolbar(editor, toolbarHost)
+
+/* --------------------------------------------------------------- menu bar */
+
+const toolbarItems = new Map(editor.getToolbarItems().map((item) => [item.name, item]))
+
+/** Run a command exposed by a toolbar item (reuses its configured dialog). */
+const invoke = (name: string) => (e: TextEditor): void => toolbarItems.get(name)?.run(e.engine)
+
+/** Start a blank document. */
+function newDocument(): void {
+  editor.setHTML('')
+  editor.engine.commands.focus()
+}
+
+/** Load a local HTML file, sanitized before it reaches the editor. */
+function openDocument(): void {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.html,.htm,text/html'
+  input.addEventListener('change', () => {
+    const file = input.files?.[0]
+    if (!file) return
+    void file.text().then((text) => editor.setHTML(sanitizeHtml(text)))
+  })
+  input.click()
+}
+
+const menus: Menu[] = [
+  {
+    label: 'File',
+    items: [
+      { label: 'New', icon: 'new', shortcut: 'Ctrl+Alt+N', run: newDocument },
+      { label: 'Open HTML…', icon: 'open', shortcut: 'Ctrl+O', run: openDocument },
+      {
+        label: 'Export HTML',
+        icon: 'exportHtml',
+        separatorBefore: true,
+        run: () => download('editor.html', editor.getHTML(), 'text/html'),
+      },
+      {
+        label: 'Export JSON',
+        icon: 'exportJson',
+        run: () => download('editor.json', JSON.stringify(editor.getJSON(), null, 2), 'application/json'),
+      },
+    ],
+  },
+  {
+    label: 'Edit',
+    items: [
+      {
+        label: 'Undo',
+        icon: 'undo',
+        shortcut: 'Ctrl+Z',
+        disabled: (e) => !e.engine.can().undo(),
+        run: (e) => e.engine.chain().focus().undo().run(),
+      },
+      {
+        label: 'Redo',
+        icon: 'redo',
+        shortcut: 'Ctrl+Shift+Z',
+        disabled: (e) => !e.engine.can().redo(),
+        run: (e) => e.engine.chain().focus().redo().run(),
+      },
+      {
+        label: 'Select all',
+        icon: 'selectAll',
+        shortcut: 'Ctrl+A',
+        separatorBefore: true,
+        run: (e) => e.engine.chain().focus().selectAll().run(),
+      },
+      {
+        label: 'Clear formatting',
+        icon: 'clearFormatting',
+        run: (e) => e.engine.chain().focus().unsetAllMarks().clearNodes().run(),
+      },
+    ],
+  },
+  {
+    label: 'Insert',
+    items: [
+      { label: 'Link', icon: 'link', shortcut: 'Ctrl+K', run: invoke('link') },
+      { label: 'Image', icon: 'image', run: invoke('image') },
+      { label: 'Anchor', icon: 'anchor', run: invoke('anchor') },
+      {
+        label: 'Divider',
+        icon: 'hr',
+        separatorBefore: true,
+        run: (e) => e.engine.chain().focus().setHorizontalRule().run(),
+      },
+      { label: 'Comment', icon: 'comment', run: invoke('addComment') },
+    ],
+  },
+]
+
+if (menubarHost) {
+  createMenuBar(editor, menubarHost, menus)
+}
 
 // Review side panel: comment threads anchored to their document ranges.
 if (commentsHost) {

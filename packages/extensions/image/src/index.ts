@@ -394,6 +394,7 @@ export function ImageExtension(options: ImageOptions = {}): TextEditorExtension 
       name: 'image',
       label: 'Image',
       group: 'image',
+      icon: 'image',
       run: (e) => {
         if (options.upload) {
           pickAndUpload(e, options.upload, options.accept ?? 'image/*')
@@ -411,6 +412,7 @@ export function ImageExtension(options: ImageOptions = {}): TextEditorExtension 
       name: 'imageAlt',
       label: 'Alt',
       group: 'image',
+      icon: 'imageAlt',
       isEnabled: (e) => e.isActive('image'),
       run: (e) => {
         const current = (e.getAttributes('image').alt as string | undefined) ?? ''
@@ -426,6 +428,7 @@ export function ImageExtension(options: ImageOptions = {}): TextEditorExtension 
       name: 'imageCaption',
       label: 'Caption',
       group: 'image',
+      icon: 'imageCaption',
       isEnabled: (e) => e.isActive('image'),
       run: (e) => {
         const current = (e.getAttributes('image').caption as string | undefined) ?? ''

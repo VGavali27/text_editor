@@ -1,5 +1,6 @@
 import type { TextEditor } from '@editor/core'
 import type { ToolbarItem } from '@editor/plugin-api'
+import { createIcon } from './icons'
 
 export interface ToolbarHandle {
   /** Re-evaluate active/enabled state for every button. */
@@ -32,8 +33,18 @@ function mountItems(editor: TextEditor, element: HTMLElement, items: ToolbarItem
     button.type = 'button'
     button.className = 'editor-toolbar__button'
     button.dataset.name = item.name
-    button.textContent = item.label
-    button.title = item.label
+
+    const icon = item.icon ? createIcon(item.icon) : null
+    if (icon) {
+      button.classList.add('editor-toolbar__button--icon')
+      button.appendChild(icon)
+      // The icon is decorative; the label stays the accessible name.
+      button.setAttribute('aria-label', item.label)
+    } else {
+      button.textContent = item.label
+    }
+    button.title = item.shortcut ? `${item.label} (${item.shortcut})` : item.label
+
     button.addEventListener('mousedown', (event) => event.preventDefault())
     button.addEventListener('click', () => {
       // Commands focus the editor themselves; do not force focus here or a
@@ -327,3 +338,10 @@ export function requestText(options: TextPromptOptions = {}): Promise<string | n
     input.select()
   })
 }
+
+/* --------------------------------------------------------------- re-exports */
+
+export { createIcon, hasIcon, iconMarkup, iconNames, iconSvgs } from './icons'
+export type { IconName } from './icons'
+export { createMenuBar } from './menu'
+export type { Menu, MenuBarHandle, MenuBarOptions, MenuItem } from './menu'

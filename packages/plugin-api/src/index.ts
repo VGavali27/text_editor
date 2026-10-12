@@ -8,10 +8,14 @@ export type { TiptapEditor }
 export interface ToolbarItem {
   /** Stable identifier, also used as the default button label key. */
   name: string
-  /** Human readable label. */
+  /** Human readable label (also the accessible name when an icon is shown). */
   label: string
   /** Optional grouping key used by the toolbar layout. */
   group?: string
+  /** Optional built-in icon name (see `@editor/ui`'s icon registry). */
+  icon?: string
+  /** Optional keyboard hint shown in tooltips (e.g. `Ctrl+B`). */
+  shortcut?: string
   /** Whether the control reflects the current selection. */
   isActive?: (editor: TiptapEditor) => boolean
   /** Whether the control can currently be used. */

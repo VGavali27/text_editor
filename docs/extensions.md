@@ -44,6 +44,10 @@ const editor = new TextEditor({ element, content, extensions, editable, onChange
 Write a custom extension by returning a `TextEditorExtension`. See
 [architecture.md](architecture.md).
 
+A `ToolbarItem` may also set `icon` (a built-in icon name — see
+[Icons & menu bar](#icons--menu-bar)) and `shortcut` (a keyboard hint shown in
+tooltips and menus); both are optional and cosmetic.
+
 ---
 
 ## `@editor/extension-styling`
@@ -208,3 +212,39 @@ const value = await requestText({ title: 'Link', label: 'URL', value: 'https://'
 `openDialog` traps focus, closes on Esc/backdrop, restores focus, and locks body
 scroll. `requestText` resolves with the entered string, `''` (if `allowEmpty`),
 or `null` on cancel.
+
+### Icons & menu bar
+
+Toolbar controls render an SVG icon when their `ToolbarItem.icon` matches a
+built-in name; otherwise they fall back to the text label. The accessible name is
+always the label (`aria-label` for icon-only buttons), and `shortcut` is appended
+to the tooltip.
+
+```ts
+import { createMenuBar, createIcon, hasIcon, iconNames } from '@editor/ui'
+
+const menubar = createMenuBar(editor, menubarElement, [
+  {
+    label: 'Insert',
+    items: [
+      { label: 'Link', icon: 'link', shortcut: 'Ctrl+K', run: (e) => openMyLinkDialog(e) },
+      { label: 'Divider', icon: 'hr', separatorBefore: true, run: (e) => e.engine.chain().focus().setHorizontalRule().run() },
+    ],
+  },
+])
+
+menubar.refresh() // re-evaluate disabled / checked after external changes
+menubar.destroy()
+```
+
+`createMenuBar` renders a `role="menubar"` with `role="menu"` dropdowns and full
+keyboard support (Arrow keys between menus and items, Home/End, Enter/Space to
+run, Esc to close, click-outside to dismiss). Items support `disabled` and
+`checked` as either a boolean or a `(editor) => boolean` that is re-evaluated on
+every editor transaction.
+
+Icons are vendored from [Lucide](https://lucide.dev) (ISC) at generation time and
+embedded in `packages/ui/src/icons.ts` — **no runtime icon dependency**. Use
+`hasIcon(name)` / `iconNames()` to discover names, `createIcon(name)` to build a
+fresh `SVGElement`, and `npm run icons` to regenerate. See
+[`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md).

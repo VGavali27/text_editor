@@ -483,3 +483,65 @@ integration tests, and a v1.0.0 release.
    change-list / gutter view for tracked changes.
 2. Optional — Playwright e2e/visual snapshots on top of the jsdom suite.
 
+---
+
+## Session 8 — Icons + TinyMCE-style menu bar
+
+**Goal:** Give the toolbar icon buttons (instead of text labels) and add a
+TinyMCE-style `File` / `Edit` / `Insert` menu bar. Opt-in and dependency-free.
+
+### Icons
+
+- Added `icon?: string` and `shortcut?: string` to `ToolbarItem`
+  (`@editor/plugin-api`). Both optional/cosmetic; the label stays the accessible
+  name (`aria-label` on icon-only buttons, `shortcut` appended to the tooltip).
+- `@editor/ui` renders an inline SVG when an item's `icon` matches a built-in
+  name, else falls back to the text label.
+- New icon registry `packages/ui/src/icons.ts`: 33 vendored Lucide (ISC) icons
+  with `createIcon`, `hasIcon`, `iconMarkup`, `iconNames`. **No runtime icon
+  dependency** — paths are copied into the repo at generation time.
+- `scripts/generate-icons.mjs` (+ `npm run icons`) regenerates the file from the
+  dev-only `lucide-static` package. Provenance recorded in
+  `THIRD-PARTY-NOTICES.md` (Lucide ISC + the Feather/MIT subset).
+- Every built-in extension now supplies icons; `styling` gained `code`,
+  `codeBlock` and `horizontalRule` toolbar items.
+
+### Menu bar
+
+- `createMenuBar(editor, element, menus, options)` in `@editor/ui` renders a
+  `role="menubar"` from plain data with `menu`/`menuitem` dropdowns.
+- Full keyboard support: arrow keys within and between menus, Home/End,
+  Enter/Space to run, Esc to close (returns focus to the top button), Tab closes,
+  click-outside dismisses. `disabled` / `checked` may be booleans or
+  `(editor) => boolean` re-evaluated on every transaction.
+- Playground wires **File** (New, Open HTML, Export HTML, Export JSON), **Edit**
+  (Undo, Redo, Select all, Clear formatting) and **Insert** (Link, Image, Anchor,
+  Divider, Comment). Imported HTML is run through `sanitizeHtml` before it reaches
+  the editor, and the Insert items reuse each extension's configured dialog.
+
+### Tests
+
+- `apps/playground/test/a11y.test.ts` grew from 8 → 12 tests: icon buttons keep
+  an accessible name; the icon registry returns SVG / rejects unknowns; the menu
+  bar is an accessible menubar that runs the activated item; and keyboard nav +
+  disabled/checked state.
+- The toolbar a11y assertion now accepts `aria-label` as the accessible name
+  (icon buttons have no text content).
+
+### Verification
+
+- `npm test` — **96/96 pass**.
+- `npm run typecheck` — passes across **17** workspaces.
+- `npm run build --workspace @editor/playground` — succeeds
+  (~396 kB JS / ~125 kB gzip, ~9.4 kB CSS; icons add ~18 kB JS / ~2 kB CSS).
+- `npm run build --workspace @editor/next-example` — succeeds (prerenders `/`).
+
+### Design decisions
+
+- **Vendored Lucide, dev-only generator.** Best-looking consistent icons with
+  zero runtime dependency; `lucide-static` is used only by `npm run icons`.
+- **Data-driven menu bar.** `@editor/ui` stays framework-agnostic and hosts
+  supply the menu definitions; extension commands are invoked through their
+  existing `ToolbarItem.run`, so no command logic is duplicated.
+- **Insert scope:** existing capabilities only (no table extension yet).
+

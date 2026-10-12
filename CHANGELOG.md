@@ -4,6 +4,24 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **UI icons**: toolbar controls render built-in SVG icons when an extension item
+  supplies `icon` (with an optional `shortcut` hint); the text label stays the
+  accessible name. Icons are vendored from Lucide (ISC, dev-only
+  `lucide-static` generator → zero runtime dependency) and regenerate with
+  `npm run icons`.
+- **Menu bar**: `createMenuBar(editor, element, menus)` renders a TinyMCE-style
+  `File` / `Edit` / `Insert` menu bar from plain data (`role="menubar"`/`menu`,
+  arrow-key navigation, Home/End, Esc, click-outside), with live `disabled` /
+  `checked` states.
+- **Styling**: new `code`, `codeBlock`, and `horizontalRule` toolbar items.
+- **Playground**: wires a `File` (New, Open HTML, Export HTML, Export JSON),
+  `Edit` (Undo, Redo, Select all, Clear formatting) and `Insert` (Link, Image,
+  Anchor, Divider, Comment) menu bar; imported HTML is sanitized on load.
+
 ## [1.0.0] - 2026-10-12
 
 First stable release. A modular, opt-in WYSIWYG editor: every feature is an

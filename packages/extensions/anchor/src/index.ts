@@ -157,6 +157,7 @@ export function Anchor(options: AnchorOptions = {}): TextEditorExtension {
       name: 'anchor',
       label: 'Anchor',
       group: 'anchor',
+      icon: 'anchor',
       run: (e) => insertAnchor(e, options),
     },
   ]

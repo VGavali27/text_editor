@@ -21,7 +21,7 @@ import { Styling } from '@editor/extension-styling'
 import { History } from '@editor/extension-history'
 import { Link } from '@editor/extension-link'
 import { Sanitize } from '@editor/sanitize'
-import { createToolbar } from '@editor/ui'
+import { createMenuBar, createToolbar } from '@editor/ui'
 import '@editor/ui/styles.css'
 
 const editor = new TextEditor({
@@ -36,7 +36,16 @@ const editor = new TextEditor({
   onChange: (html) => console.log(html),
 })
 
+// Icon toolbar (labels stay the accessible names).
 createToolbar(editor, document.getElementById('toolbar')!)
+
+// Optional TinyMCE-style menu bar.
+createMenuBar(editor, document.getElementById('menubar')!, [
+  { label: 'Edit', items: [
+    { label: 'Undo', icon: 'undo', run: (e) => e.engine.chain().focus().undo().run() },
+    { label: 'Redo', icon: 'redo', run: (e) => e.engine.chain().focus().redo().run() },
+  ] },
+])
 ```
 
 Run the interactive playground:
@@ -64,7 +73,7 @@ npm run dev          # http://localhost:5173
 | `@editor/plugin-api` | `packages/plugin-api` | Extension contract: `TextEditorExtension`, `ToolbarItem`, `TextEditorOptions` |
 | `@editor/core` | `packages/core` | The public `TextEditor` class (wraps TipTap) |
 | `@editor/sanitize` | `packages/sanitize` | DOMPurify allowlist gate (`sanitizeHtml`, `Sanitize`, `SanitizePaste`, `enforceUriAllowlist`) |
-| `@editor/ui` | `packages/ui` | Headless toolbar / bubble menu, dialogs, default theme |
+| `@editor/ui` | `packages/ui` | Icon toolbar / bubble menu, TinyMCE-style menu bar, dialogs, vendored icon set, default theme |
 | `@editor/extension-styling` | `packages/extensions/styling` | Base formatting |
 | `@editor/extension-history` | `packages/extensions/history` | Undo / redo |
 | `@editor/extension-link` | `packages/extensions/link` | Hyperlinks |

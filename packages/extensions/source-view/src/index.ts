@@ -141,6 +141,7 @@ export function SourceView(options: SourceViewOptions = {}): TextEditorExtension
       name: 'sourceView',
       label: options.label ?? 'HTML',
       group: 'view',
+      icon: 'source',
       isActive: (e) => isSourceView(e),
       run: (e) => {
         toggleSourceMode(e, options)

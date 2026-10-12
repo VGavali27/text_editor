@@ -332,6 +332,7 @@ export function TrackChanges(options: TrackChangesOptions = {}): TextEditorExten
       name: 'trackChanges',
       label: options.label ?? 'Track',
       group: 'review',
+      icon: 'track',
       isActive: (editor) => trackChangesKey.getState(editor.state) === true,
       run: (editor) => {
         const enabled = trackChangesKey.getState(editor.state) === true
@@ -342,6 +343,7 @@ export function TrackChanges(options: TrackChangesOptions = {}): TextEditorExten
       name: 'acceptChanges',
       label: 'Accept',
       group: 'review',
+      icon: 'accept',
       isActive: () => false,
       isEnabled: (editor) => hasTrackedChanges(editor.state.doc),
       run: (editor) => {
@@ -352,6 +354,7 @@ export function TrackChanges(options: TrackChangesOptions = {}): TextEditorExten
       name: 'rejectChanges',
       label: 'Reject',
       group: 'review',
+      icon: 'reject',
       isActive: () => false,
       isEnabled: (editor) => hasTrackedChanges(editor.state.doc),
       run: (editor) => {

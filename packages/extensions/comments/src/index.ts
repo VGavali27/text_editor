@@ -254,6 +254,7 @@ export function Comments(options: CommentsOptions = {}): TextEditorExtension {
       name: 'addComment',
       label: options.label ?? 'Comment',
       group: 'review',
+      icon: 'comment',
       isActive: (editor) => editor.isActive('comment'),
       isEnabled: (editor) => !editor.state.selection.empty,
       run: (editor) => {
