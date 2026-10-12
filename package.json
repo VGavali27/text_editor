@@ -1,0 +1,23 @@
+{
+  "name": "text-editor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Modular WYSIWYG rich-text editor library (opt-in extensions)",
+  "workspaces": [
+    "packages/*",
+    "packages/extensions/*",
+    "packages/adapters/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @editor/playground",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

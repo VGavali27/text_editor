@@ -1,0 +1,32 @@
+{
+  "name": "@editor/extension-styling",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@editor/plugin-api": "*",
+    "@tiptap/core": "^2.27.3",
+    "@tiptap/extension-blockquote": "^2.27.3",
+    "@tiptap/extension-bold": "^2.27.3",
+    "@tiptap/extension-bullet-list": "^2.27.3",
+    "@tiptap/extension-code": "^2.27.3",
+    "@tiptap/extension-code-block": "^2.27.3",
+    "@tiptap/extension-hard-break": "^2.27.3",
+    "@tiptap/extension-heading": "^2.27.3",
+    "@tiptap/extension-horizontal-rule": "^2.27.3",
+    "@tiptap/extension-italic": "^2.27.3",
+    "@tiptap/extension-list-item": "^2.27.3",
+    "@tiptap/extension-ordered-list": "^2.27.3",
+    "@tiptap/extension-strike": "^2.27.3",
+    "@tiptap/extension-underline": "^2.27.3"
+  }
+}
