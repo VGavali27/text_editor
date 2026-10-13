@@ -1,0 +1,70 @@
+.editor-find-match {
+  background: #ffe58f;
+  border-radius: 2px;
+}
+
+.editor-find-match--active {
+  background: #ffb300;
+  outline: 1px solid #d18b00;
+}
+
+.editor-find {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 60;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+  max-width: min(90vw, 34rem);
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--editor-fg, #1f2937);
+  background: var(--editor-bg, #ffffff);
+  border: 1px solid var(--editor-border, #d1d5db);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.editor-find[hidden] {
+  display: none;
+}
+
+.editor-find__input {
+  flex: 1 1 9rem;
+  min-width: 7rem;
+  padding: 0.25rem 0.4rem;
+  font: inherit;
+  color: inherit;
+  background: var(--editor-bg, #ffffff);
+  border: 1px solid var(--editor-border, #d1d5db);
+  border-radius: 6px;
+}
+
+.editor-find__status {
+  min-width: 3rem;
+  text-align: center;
+  color: var(--editor-muted, #6b7280);
+  font-variant-numeric: tabular-nums;
+}
+
+.editor-find__button {
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--editor-border, #d1d5db);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.editor-find__button:hover {
+  border-color: var(--editor-accent, #2563eb);
+}
+
+.editor-find__close {
+  font-size: 1rem;
+  line-height: 1;
+}

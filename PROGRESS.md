@@ -618,3 +618,59 @@ extension-per-feature, dependency-free, and sanitizer-safe.
 - **`addGlobalAttributes` over new node definitions** to avoid duplicate node
   warnings and keep core authoritative.
 
+---
+
+## Session 10 — TinyMCE batch 1: find, word count, characters, insert, direction, fullscreen, help
+
+**Goal:** Start closing the gap to the TinyMCE plugin list. This session delivers
+`searchreplace`, `wordcount`, `charmap`, `emoticons`, `insertdatetime`,
+`pagebreak`, `nonbreaking`, `directionality`, `fullscreen` and `help` as opt-in
+extensions.
+
+### New extensions
+
+| Package | Path | What it does |
+|---|---|---|
+| `@editor/extension-find` | `packages/extensions/find` | case-insensitive find + replace (decorations, next/prev, replace current/all) + `createFindBar` |
+| `@editor/extension-word-count` | `packages/extensions/word-count` | words / characters / no-space characters; `createWordCount` readout |
+| `@editor/extension-special-chars` | `packages/extensions/special-chars` | `charmap` + `emoticons` picker dialogs, `insertCharacter` |
+| `@editor/extension-insert` | `packages/extensions/insert` | `insertDateTime` (formattable), `pageBreak` node, `insertNonBreakingSpace` |
+| `@editor/extension-direction` | `packages/extensions/direction` | LTR / RTL `dir` attribute on blocks |
+| `@editor/extension-fullscreen` | `packages/extensions/fullscreen` | class + Fullscreen API toggle (`editor--fullscreen`) |
+| `@editor/extension-help` | `packages/extensions/help` | shortcuts reference dialog |
+
+### Notes
+
+- **Find** is implemented with a ProseMirror `Plugin` (state holds
+  `{ term, matches, active }`); matches are recomputed after every transaction
+  and rendered as `editor-find-match` decorations. The UI is a small
+  `createFindBar` floating bar (Ctrl+F in the playground).
+- **Fullscreen** toggles a class and opportunistically uses
+  `requestFullscreen()`/`exitFullscreen()` (feature-detected; jsdom falls back
+  to the class path). Exposes `isFullscreen(engine)`.
+- **Special chars/help** build their dialogs on `@editor/ui`'s `openDialog`, so
+  they inherit the existing focus-trap / Esc / a11y behaviour.
+- **Sanitizer** grew: `div` allowed (only for the page-break container —
+  `style` is still gated) and `dir` + `data-page-break` attributes.
+
+### Playground
+
+- Wires all seven extensions; the toolbar/`Insert`/`View`/`Tools`/`Help` menus
+  reach every new command; Ctrl+F toggles the find bar; a status footer shows
+  live word/character counts.
+
+### Verification
+
+- `npm test` — **139/139 pass** (was 113; +26 across 7 new test files).
+- `npm run typecheck` — 27 workspaces clean.
+- `npm run build --workspace @editor/playground` — ~425 kB JS / ~133 kB gzip,
+  ~13.7 kB CSS.
+- `npm run build --workspace @editor/next-example` — succeeds (prerenders `/`).
+
+### Design decisions
+
+- **Search state lives in a plugin key**, not in the document — it is ephemeral
+  and never serialized.
+- **Dependencies stay `@tiptap/core` only** except `special-chars`/`help`, which
+  reuse `@editor/ui`'s `openDialog` instead of re-implementing a modal.
+

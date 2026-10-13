@@ -1,0 +1,30 @@
+.editor-help__heading {
+  margin: 0.8rem 0 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--editor-muted, #6b7280);
+}
+
+.editor-help__heading:first-child {
+  margin-top: 0;
+}
+
+.editor-help__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.editor-help__table td {
+  padding: 0.25rem 0.4rem;
+  border-bottom: 1px solid var(--editor-border, #e5e7eb);
+}
+
+.editor-help__table td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--editor-muted, #6b7280);
+}

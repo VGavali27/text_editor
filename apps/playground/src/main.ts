@@ -3,14 +3,21 @@ import { Align } from '@editor/extension-align'
 import { Anchor } from '@editor/extension-anchor'
 import { Color } from '@editor/extension-color'
 import { Comments, createCommentPanel } from '@editor/extension-comments'
+import { Direction } from '@editor/extension-direction'
+import { createFindBar, Find } from '@editor/extension-find'
+import { Fullscreen } from '@editor/extension-fullscreen'
+import { Help } from '@editor/extension-help'
 import { History } from '@editor/extension-history'
 import { ImageExtension } from '@editor/extension-image'
+import { Insert } from '@editor/extension-insert'
 import { Link } from '@editor/extension-link'
 import { ListStyles } from '@editor/extension-list-styles'
 import { normalizePastedHtml, PasteClean } from '@editor/extension-paste-clean'
 import { SourceView } from '@editor/extension-source-view'
+import { SpecialChars } from '@editor/extension-special-chars'
 import { Styling } from '@editor/extension-styling'
 import { TrackChanges } from '@editor/extension-track-changes'
+import { createWordCount, WordCount } from '@editor/extension-word-count'
 import { sanitizeHtml, Sanitize } from '@editor/sanitize'
 import { createBubbleToolbar, createMenuBar, createToolbar, requestText } from '@editor/ui'
 import type { Menu } from '@editor/ui'
@@ -18,6 +25,12 @@ import '@editor/ui/styles.css'
 import '@editor/extension-source-view/styles.css'
 import '@editor/extension-track-changes/styles.css'
 import '@editor/extension-comments/styles.css'
+import '@editor/extension-find/styles.css'
+import '@editor/extension-special-chars/styles.css'
+import '@editor/extension-help/styles.css'
+import '@editor/extension-insert/styles.css'
+import '@editor/extension-fullscreen/styles.css'
+import '@editor/extension-word-count/styles.css'
 import './style.css'
 
 const editorHost = document.getElementById('editor')
@@ -64,6 +77,13 @@ const editor = new TextEditor({
     Align(),
     ListStyles(),
     Color(),
+    Direction(),
+    Insert(),
+    SpecialChars(),
+    WordCount(),
+    Find(),
+    Fullscreen(),
+    Help(),
     History(),
     Link({
       onRequestUrl: (current) =>
@@ -107,6 +127,18 @@ const editor = new TextEditor({
 })
 
 createToolbar(editor, toolbarHost)
+
+// Find & replace bar (Ctrl+F toggles it) and a live word/character count.
+const findBar = createFindBar(editor)
+window.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+    event.preventDefault()
+    findBar.toggle()
+  }
+})
+
+const statusHost = document.getElementById('status')
+if (statusHost) createWordCount(editor, statusHost)
 
 /* --------------------------------------------------------------- menu bar */
 
@@ -240,8 +272,68 @@ const menus: Menu[] = [
         separatorBefore: true,
         run: (e) => e.engine.chain().focus().setHorizontalRule().run(),
       },
+      {
+        label: 'Date/time',
+        icon: 'calendar',
+        run: invoke('insertDateTime'),
+      },
+      {
+        label: 'Page break',
+        icon: 'pageBreak',
+        run: invoke('insertPageBreak'),
+      },
+      {
+        label: 'Non-breaking space',
+        icon: 'nbsp',
+        run: invoke('insertNonBreakingSpace'),
+      },
+      {
+        label: 'Special characters…',
+        icon: 'charmap',
+        separatorBefore: true,
+        run: invoke('specialChars'),
+      },
+      { label: 'Emoticons…', icon: 'smile', run: invoke('emoticons') },
       { label: 'Comment', icon: 'comment', run: invoke('addComment') },
     ],
+  },
+  {
+    label: 'View',
+    items: [
+      {
+        label: 'Left to right',
+        icon: 'ltr',
+        checked: (e) => e.engine.isActive({ dir: 'ltr' }),
+        run: (e) => e.engine.chain().focus().setTextDirection('ltr').run(),
+      },
+      {
+        label: 'Right to left',
+        icon: 'rtl',
+        checked: (e) => e.engine.isActive({ dir: 'rtl' }),
+        run: (e) => e.engine.chain().focus().setTextDirection('rtl').run(),
+      },
+      {
+        label: 'Fullscreen',
+        icon: 'fullscreen',
+        separatorBefore: true,
+        run: (e) => e.engine.chain().focus().toggleFullscreen().run(),
+      },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      {
+        label: 'Find & replace…',
+        icon: 'find',
+        shortcut: 'Ctrl+F',
+        run: () => findBar.toggle(),
+      },
+    ],
+  },
+  {
+    label: 'Help',
+    items: [{ label: 'Help', icon: 'help', run: invoke('help') }],
   },
 ]
 

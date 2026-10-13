@@ -1,0 +1,30 @@
+.editor-page-break {
+  height: 0;
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px dashed var(--editor-border, #9ca3af);
+  page-break-after: always;
+}
+
+.editor-page-break::after {
+  content: 'Page break';
+  display: block;
+  transform: translateY(-0.6rem);
+  width: max-content;
+  margin: 0 auto;
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--editor-muted, #6b7280);
+  background: var(--editor-bg, #ffffff);
+}
+
+@media print {
+  .editor-page-break {
+    border: 0;
+  }
+  .editor-page-break::after {
+    display: none;
+  }
+}

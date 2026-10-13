@@ -1,0 +1,32 @@
+.editor-charmap__group {
+  margin: 0.6rem 0 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--editor-muted, #6b7280);
+}
+
+.editor-charmap__group:first-child {
+  margin-top: 0;
+}
+
+.editor-charmap__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.2rem, 1fr));
+  gap: 0.25rem;
+}
+
+.editor-charmap__char {
+  min-height: 2.2rem;
+  font-size: 1.1rem;
+  color: var(--editor-fg, #1f2937);
+  background: var(--editor-bg, #ffffff);
+  border: 1px solid var(--editor-border, #d1d5db);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.editor-charmap__char:hover {
+  border-color: var(--editor-accent, #2563eb);
+}

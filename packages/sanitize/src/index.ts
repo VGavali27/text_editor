@@ -23,16 +23,21 @@ const DEFAULT_TAGS = [
   'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'ul', 'ol', 'li', 'blockquote', 'hr', 'a', 'img', 'span', 'sub', 'sup',
   'figure', 'figcaption',
+  // Container used by the opt-in page-break node. Inert when the insert
+  // extension is off; `div` itself carries no styling once `style` is gated.
+  'div',
 ]
 
 const DEFAULT_ATTRIBUTES = [
   'href', 'target', 'rel', 'title',
   'src', 'alt', 'width', 'height',
-  'id', 'class', 'style',
+  'id', 'class', 'style', 'dir',
   // Used by the opt-in track-changes / comments extensions so marked ranges
   // survive the paste/serialize gate. Inert when those extensions are off.
   'data-insertion', 'data-deletion', 'data-author', 'data-date',
   'data-comment', 'data-comment-id',
+  // Used by the opt-in page-break node. Inert when the insert extension is off.
+  'data-page-break',
 ]
 
 function buildUriRegexp(schemes: string[]): RegExp {

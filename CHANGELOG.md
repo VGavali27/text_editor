@@ -33,6 +33,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a CSS injection path.
 - **Playground**: wires `Align()`, `ListStyles()` and `Color()` and adds a
   `Format` menu (alignment + clear colour / highlight / block background).
+- **Find & replace** (`@editor/extension-find`): case-insensitive search with
+  live highlights, next/previous, replace-current and replace-all commands, and
+  a ready-made `createFindBar` (Ctrl+F).
+- **Word count** (`@editor/extension-word-count`): words / characters /
+  characters-no-spaces, live via `createWordCount` or the `onChange` callback.
+- **Special characters & emoticons** (`@editor/extension-special-chars`):
+  `insertCharacter` command and an `openCharacterPicker` dialog grid.
+- **Insert** (`@editor/extension-insert`): date/time (formattable), page-break
+  node, and non-breaking space; sanitizer now allows the page-break `div`
+  (`data-page-break`) and `dir` attributes.
+- **Direction** (`@editor/extension-direction`): LTR / RTL on blocks.
+- **Fullscreen** (`@editor/extension-fullscreen`): class + Fullscreen API toggle.
+- **Help** (`@editor/extension-help`): shortcuts reference dialog.
+- **Playground**: wires all of the above, adds `View` / `Tools` / `Help` menus,
+  insert-menu entries, a find bar (Ctrl+F) and a live word-count status footer.
 
 ## [1.0.0] - 2026-10-12
 

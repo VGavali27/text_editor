@@ -61,6 +61,28 @@ const MAP = {
   exportHtml: 'download',
   exportJson: 'file-json',
   save: 'save',
+  // find & replace
+  find: 'search',
+  replace: 'replace',
+  chevronUp: 'chevron-up',
+  chevronDown: 'chevron-down',
+  close: 'x',
+  // insert
+  calendar: 'calendar',
+  clock: 'clock',
+  pageBreak: 'separator-horizontal',
+  nbsp: 'space',
+  // direction
+  ltr: 'arrow-right-to-line',
+  rtl: 'arrow-left-to-line',
+  // view
+  fullscreen: 'maximize',
+  exitFullscreen: 'minimize',
+  // help & characters
+  help: 'circle-help',
+  charmap: 'sigma',
+  smile: 'smile',
+  keyboard: 'keyboard',
 }
 
 const ATTRS =
