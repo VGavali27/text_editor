@@ -28,7 +28,7 @@ const DEFAULT_TAGS = [
 const DEFAULT_ATTRIBUTES = [
   'href', 'target', 'rel', 'title',
   'src', 'alt', 'width', 'height',
-  'id', 'class',
+  'id', 'class', 'style',
   // Used by the opt-in track-changes / comments extensions so marked ranges
   // survive the paste/serialize gate. Inert when those extensions are off.
   'data-insertion', 'data-deletion', 'data-author', 'data-date',
@@ -48,6 +48,53 @@ const URI_ATTRIBUTES = [
 
 /** Whitespace / control characters used to obfuscate schemes (`java\tscript:`). */
 const OBFUSCATING_CHARS = /[\u0000-\u0020\u007f-\u009f]/g
+
+/** CSS properties the editor itself emits, and how to validate their values. */
+const LIST_STYLE_TYPES = new Set([
+  'disc', 'circle', 'square',
+  'decimal', 'decimal-leading-zero',
+  'lower-alpha', 'upper-alpha', 'lower-latin', 'upper-latin',
+  'lower-roman', 'upper-roman', 'lower-greek', 'none',
+])
+const TEXT_ALIGNS = new Set(['left', 'right', 'center', 'justify', 'start', 'end'])
+
+/** Loose but injection-proof color check: hex, rgb/hsl functions, or a name. */
+function isSafeColor(value: string): boolean {
+  return (
+    /^#[0-9a-f]{3,8}$/i.test(value) ||
+    /^(?:rgb|rgba|hsl|hsla)\(\s*[-0-9.,%/\s]+\)$/i.test(value) ||
+    /^[a-z]+$/i.test(value)
+  )
+}
+
+const STYLE_RULES: Record<string, (value: string) => boolean> = {
+  color: isSafeColor,
+  'background-color': isSafeColor,
+  'text-align': (value) => TEXT_ALIGNS.has(value.toLowerCase()),
+  'list-style-type': (value) => LIST_STYLE_TYPES.has(value.toLowerCase()),
+}
+
+/**
+ * Reduce an element's `style` attribute to the small set of properties the
+ * editor emits (color, background-color, text-align, list-style-type), with
+ * values validated. Everything else — `url(...)`, `expression(...)`, positioning,
+ * `!important`, … — is dropped.
+ */
+export function enforceStyleAllowlist(element: Element): void {
+  const style = element.getAttribute('style')
+  if (!style) return
+  const kept: string[] = []
+  for (const declaration of style.split(';')) {
+    const colon = declaration.indexOf(':')
+    if (colon < 0) continue
+    const property = declaration.slice(0, colon).trim().toLowerCase()
+    const value = declaration.slice(colon + 1).trim()
+    const rule = STYLE_RULES[property]
+    if (rule && value && rule(value)) kept.push(`${property}: ${value}`)
+  }
+  if (kept.length) element.setAttribute('style', kept.join('; '))
+  else element.removeAttribute('style')
+}
 
 /**
  * Remove every URL attribute whose scheme is not allowlisted. DOMPurify keeps
@@ -78,6 +125,7 @@ export function sanitizeHtml(html: string, config: SanitizeConfig = {}): string 
   const guard = (node: Node): void => {
     if (typeof (node as Element).getAttribute !== 'function') return
     enforceUriAllowlist(node as Element, allowedSchemes)
+    enforceStyleAllowlist(node as Element)
   }
   const canHook =
     typeof DOMPurify.addHook === 'function' && typeof DOMPurify.removeHook === 'function'

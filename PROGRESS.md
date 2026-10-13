@@ -545,3 +545,76 @@ TinyMCE-style `File` / `Edit` / `Insert` menu bar. Opt-in and dependency-free.
   existing `ToolbarItem.run`, so no command logic is duplicated.
 - **Insert scope:** existing capabilities only (no table extension yet).
 
+---
+
+## Session 9 — Alignment, list styles, colors
+
+**Goal:** Add opt-in alignment, list-marker styles, and text/block colors the
+TinyMCE way (`align*`, `advlist`, `forecolor`/`backcolor`) — still
+extension-per-feature, dependency-free, and sanitizer-safe.
+
+### New extensions
+
+| Package | Path | What it does |
+|---|---|---|
+| `@editor/extension-align` | `packages/extensions/align` | `textAlign` on paragraph/heading → inline `text-align`; items `alignLeft`/`Center`/`Right`/`Justify` |
+| `@editor/extension-list-styles` | `packages/extensions/list-styles` | `listStyleType` on bullet/ordered lists; ordered `123 / abc / ABC / i / I`, bullet `disc / circle / square` |
+| `@editor/extension-color` | `packages/extensions/color` | `textColor` + `textHighlight` marks and a `backgroundColor` block attribute |
+
+- All three use TipTap's `addGlobalAttributes` to extend the core
+  `Paragraph`/`Heading`/`BulletList`/`OrderedList` schema instead of re-declaring
+  those nodes (which would emit duplicate-extension warnings and shadow core).
+- Everything renders as inline `style` on the element itself, so it round-trips
+  through `getHTML()`/`setHTML()` and survives paste.
+
+### Toolbar controls: beyond buttons
+
+- `ToolbarItem` gained `options?: ToolbarOption[]`, `value?(editor)`,
+  `type?: 'button' | 'color'` and `color?(editor)`; `run` is now
+  `(editor, value?: string) => void`.
+- `@editor/ui` renders a `<select>` for `options`, a native `<input type="color">`
+  (plus a clear button) for `type: 'color'`, and a button otherwise. Every control
+  keeps its `aria-label` and active/disabled refresh.
+- Colors are normalised to `#rrggbb` for the picker via `toHexColor`, which parses
+  hex, `rgb()`/`rgba()` and shorthand hex.
+
+### Sanitizer: safe inline styles
+
+- `style` joined the attribute allowlist, and a new deterministic
+  `enforceStyleAllowlist(element)` hook re-parses each `style` attribute and keeps
+  only `color`, `background-color`, `text-align`, `list-style-type` with values
+  that match strict patterns. `position`, `background-image: url(…)`,
+  `expression(…)`, `!important`, etc. are dropped — colours survive paste without
+  revealing a CSS-injection path. `enforceStyleAllowlist` is exported.
+
+### Playground
+
+- Wires `Align()`, `ListStyles()` and `Color()`; the toolbar gains the four
+  alignment buttons, the two list-style dropdowns and the three color inputs.
+- New **Format** menu (align left/center/right/justify with checkmarks; clear
+  colour & highlight; clear block background).
+
+### Tests
+
+- New `align` (3), `list-styles` (4) and `color` (4) test files; `sanitize` grew
+  by 5 (style allowlist + `enforceStyleAllowlist`); the toolbar a11y suite covers
+  the `<select>` and color controls.
+
+### Verification
+
+- `npm test` — **113/113 pass**.
+- `npm run typecheck` — passes across **20** workspaces.
+- `npm run build --workspace @editor/playground` — succeeds
+  (~407 kB JS / ~128 kB gzip, ~10.7 kB CSS).
+- `npm run build --workspace @editor/next-example` — succeeds (prerenders `/`).
+
+### Design decisions
+
+- **No new runtime dependencies.** Alignment/list-styles/colors are implemented
+  with `@tiptap/core` only; the `@tiptap/extension-text-align` / `-color` /
+  `-highlight` / `-text-style` packages were deliberately not added.
+- **Inline styles over CSS classes.** Keeps output self-describing and portable
+  (no stylesheet coupling), at the cost of a strict, explicit sanitizer allowlist.
+- **`addGlobalAttributes` over new node definitions** to avoid duplicate node
+  warnings and keep core authoritative.
+

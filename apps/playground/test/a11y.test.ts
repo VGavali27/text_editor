@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { TextEditor } from '@editor/core'
+import type { ToolbarItem } from '@editor/core'
 import { Comments, createCommentPanel } from '@editor/extension-comments'
 import { Styling } from '@editor/extension-styling'
 import {
@@ -80,6 +81,46 @@ describe('toolbar a11y', () => {
     expect(bold?.getAttribute('aria-label')).toBe('Bold')
     expect(bold?.querySelector('svg.editor-icon')).toBeTruthy()
     expect(bold?.title).toContain('Ctrl+B')
+
+    handle.destroy()
+  })
+
+  it('renders dropdown and color controls with the item label', () => {
+    const editor = makeEditor()
+    const element = track(document.createElement('div'))
+    const items: ToolbarItem[] = [
+      {
+        name: 'marker',
+        label: 'Marker style',
+        options: [
+          { value: 'disc', label: 'Disc' },
+          { value: 'circle', label: 'Circle' },
+        ],
+        value: () => 'circle',
+        run: () => {},
+      },
+      {
+        name: 'tint',
+        label: 'Tint',
+        type: 'color',
+        icon: 'palette',
+        color: () => '#ff8800',
+        run: () => {},
+      },
+    ]
+    const handle = createToolbar(editor, element, items)
+
+    const select = element.querySelector('select')
+    expect(select?.getAttribute('aria-label')).toBe('Marker style')
+    expect(select?.value).toBe('circle')
+
+    const color = element.querySelector<HTMLInputElement>('input[type="color"]')
+    expect(color?.getAttribute('aria-label')).toBe('Tint')
+    expect(color?.value).toBe('#ff8800')
+
+    // Clear is hidden while a color is set; shown once populated.
+    const clear = element.querySelector<HTMLButtonElement>('.editor-toolbar__color-clear')
+    expect(clear?.getAttribute('aria-label')).toBe('Clear Tint')
 
     handle.destroy()
   })

@@ -3,21 +3,162 @@ import type { ToolbarItem } from '@editor/plugin-api'
 import { createIcon } from './icons'
 
 export interface ToolbarHandle {
-  /** Re-evaluate active/enabled state for every button. */
+  /** Re-evaluate active/enabled state for every control. */
   refresh: () => void
   /** Remove the toolbar and detach listeners. */
   destroy: () => void
 }
 
-interface Control {
+interface MountedControl {
   item: ToolbarItem
-  button: HTMLButtonElement
+  element: HTMLElement
+  refresh: () => void
 }
 
-/** Build the buttons for `items` into `element`, separated by group. */
-function mountItems(editor: TextEditor, element: HTMLElement, items: ToolbarItem[]): Control[] {
+/** Normalise a CSS color to a 7-char hex for `<input type="color">`. */
+function toHexColor(value: string | null): string {
+  if (value) {
+    const trimmed = value.trim()
+    const hex = /^#([0-9a-f]{3,8})$/i.exec(trimmed)?.[1]
+    if (hex) {
+      if (hex.length === 3) {
+        return `#${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`
+      }
+      if (hex.length >= 6) return `#${hex.slice(0, 6)}`
+    }
+    // Browsers normalise inline colors to rgb()/rgba(), so parse those too.
+    const rgb = /^rgba?\(\s*(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/i.exec(trimmed)
+    if (rgb) {
+      const channel = (part: string): string =>
+        Math.min(255, Number(part)).toString(16).padStart(2, '0')
+      return `#${channel(rgb[1]!)}${channel(rgb[2]!)}${channel(rgb[3]!)}`
+    }
+  }
+  return '#000000'
+}
+
+function createButtonControl(editor: TextEditor, item: ToolbarItem): MountedControl {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'editor-toolbar__button'
+  button.dataset.name = item.name
+
+  const icon = item.icon ? createIcon(item.icon) : null
+  if (icon) {
+    button.classList.add('editor-toolbar__button--icon')
+    button.appendChild(icon)
+    // The icon is decorative; the label stays the accessible name.
+    button.setAttribute('aria-label', item.label)
+  } else {
+    button.textContent = item.label
+  }
+  button.title = item.shortcut ? `${item.label} (${item.shortcut})` : item.label
+
+  button.addEventListener('mousedown', (event) => event.preventDefault())
+  button.addEventListener('click', () => {
+    // Commands focus the editor themselves; do not force focus here or a
+    // dialog opened by the command would immediately lose focus.
+    void item.run(editor.engine)
+  })
+
+  return {
+    item,
+    element: button,
+    refresh() {
+      const active = item.isActive?.(editor.engine) ?? false
+      const enabled = item.isEnabled ? item.isEnabled(editor.engine) : true
+      button.disabled = !enabled
+      button.classList.toggle('is-active', active)
+      button.setAttribute('aria-pressed', String(active))
+    },
+  }
+}
+
+function createSelectControl(editor: TextEditor, item: ToolbarItem): MountedControl {
+  const wrap = document.createElement('span')
+  wrap.className = 'editor-toolbar__select-wrap'
+  wrap.dataset.name = item.name
+
+  const icon = item.icon ? createIcon(item.icon) : null
+  if (icon) wrap.appendChild(icon)
+
+  const select = document.createElement('select')
+  select.className = 'editor-toolbar__select'
+  select.setAttribute('aria-label', item.label)
+  select.title = item.label
+
+  for (const option of item.options ?? []) {
+    const node = document.createElement('option')
+    node.value = option.value
+    node.textContent = option.label
+    select.appendChild(node)
+  }
+
+  select.addEventListener('change', () => {
+    void item.run(editor.engine, select.value)
+  })
+  wrap.appendChild(select)
+
+  return {
+    item,
+    element: wrap,
+    refresh() {
+      const enabled = item.isEnabled ? item.isEnabled(editor.engine) : true
+      select.disabled = !enabled
+      const current = (item.value?.(editor.engine) ?? '') || ''
+      select.value = current
+    },
+  }
+}
+
+function createColorControl(editor: TextEditor, item: ToolbarItem): MountedControl {
+  const wrap = document.createElement('span')
+  wrap.className = 'editor-toolbar__color'
+  wrap.dataset.name = item.name
+
+  const icon = item.icon ? createIcon(item.icon) : null
+  if (icon) wrap.appendChild(icon)
+
+  const input = document.createElement('input')
+  input.type = 'color'
+  input.className = 'editor-toolbar__color-input'
+  input.setAttribute('aria-label', item.label)
+  input.title = item.label
+  input.addEventListener('input', () => {
+    void item.run(editor.engine, input.value)
+  })
+  wrap.appendChild(input)
+
+  const clear = document.createElement('button')
+  clear.type = 'button'
+  clear.className = 'editor-toolbar__color-clear'
+  clear.textContent = '×'
+  clear.setAttribute('aria-label', `Clear ${item.label}`)
+  clear.title = `Clear ${item.label}`
+  clear.addEventListener('mousedown', (event) => event.preventDefault())
+  clear.addEventListener('click', () => {
+    void item.run(editor.engine, '')
+  })
+  wrap.appendChild(clear)
+
+  return {
+    item,
+    element: wrap,
+    refresh() {
+      const enabled = item.isEnabled ? item.isEnabled(editor.engine) : true
+      const current = item.color?.(editor.engine) ?? null
+      input.disabled = !enabled
+      clear.disabled = !enabled
+      clear.hidden = !current
+      input.value = toHexColor(current)
+    },
+  }
+}
+
+/** Build the controls for `items` into `element`, separated by group. */
+function mountItems(editor: TextEditor, element: HTMLElement, items: ToolbarItem[]): MountedControl[] {
   element.replaceChildren()
-  const controls: Control[] = []
+  const controls: MountedControl[] = []
   let lastGroup: string | undefined
 
   for (const item of items) {
@@ -29,43 +170,22 @@ function mountItems(editor: TextEditor, element: HTMLElement, items: ToolbarItem
     }
     lastGroup = item.group
 
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.className = 'editor-toolbar__button'
-    button.dataset.name = item.name
+    const control =
+      item.options?.length
+        ? createSelectControl(editor, item)
+        : item.type === 'color'
+          ? createColorControl(editor, item)
+          : createButtonControl(editor, item)
 
-    const icon = item.icon ? createIcon(item.icon) : null
-    if (icon) {
-      button.classList.add('editor-toolbar__button--icon')
-      button.appendChild(icon)
-      // The icon is decorative; the label stays the accessible name.
-      button.setAttribute('aria-label', item.label)
-    } else {
-      button.textContent = item.label
-    }
-    button.title = item.shortcut ? `${item.label} (${item.shortcut})` : item.label
-
-    button.addEventListener('mousedown', (event) => event.preventDefault())
-    button.addEventListener('click', () => {
-      // Commands focus the editor themselves; do not force focus here or a
-      // dialog opened by the command would immediately lose focus.
-      void item.run(editor.engine)
-    })
-    element.appendChild(button)
-    controls.push({ item, button })
+    element.appendChild(control.element)
+    controls.push(control)
   }
 
   return controls
 }
 
-function refreshItems(editor: TextEditor, controls: Control[]): void {
-  for (const { item, button } of controls) {
-    const active = item.isActive?.(editor.engine) ?? false
-    const enabled = item.isEnabled ? item.isEnabled(editor.engine) : true
-    button.disabled = !enabled
-    button.classList.toggle('is-active', active)
-    button.setAttribute('aria-pressed', String(active))
-  }
+function refreshItems(controls: MountedControl[]): void {
+  for (const control of controls) control.refresh()
 }
 
 /**
@@ -82,7 +202,7 @@ export function createToolbar(
   element.setAttribute('aria-orientation', 'horizontal')
 
   const controls = mountItems(editor, element, items)
-  const refresh = (): void => refreshItems(editor, controls)
+  const refresh = (): void => refreshItems(controls)
 
   editor.engine.on('transaction', refresh)
   editor.engine.on('selectionUpdate', refresh)
@@ -123,7 +243,7 @@ export function createBubbleToolbar(
   document.body.appendChild(element)
 
   const controls = mountItems(editor, element, options.items ?? editor.getToolbarItems())
-  const refresh = (): void => refreshItems(editor, controls)
+  const refresh = (): void => refreshItems(controls)
 
   const update = (): void => {
     const selection = window.getSelection()

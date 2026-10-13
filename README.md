@@ -75,6 +75,9 @@ npm run dev          # http://localhost:5173
 | `@editor/sanitize` | `packages/sanitize` | DOMPurify allowlist gate (`sanitizeHtml`, `Sanitize`, `SanitizePaste`, `enforceUriAllowlist`) |
 | `@editor/ui` | `packages/ui` | Icon toolbar / bubble menu, TinyMCE-style menu bar, dialogs, vendored icon set, default theme |
 | `@editor/extension-styling` | `packages/extensions/styling` | Base formatting |
+| `@editor/extension-align` | `packages/extensions/align` | Text alignment |
+| `@editor/extension-list-styles` | `packages/extensions/list-styles` | List marker styles (123 / abc / i, disc / circle / square) |
+| `@editor/extension-color` | `packages/extensions/color` | Text color, highlight, block background |
 | `@editor/extension-history` | `packages/extensions/history` | Undo / redo |
 | `@editor/extension-link` | `packages/extensions/link` | Hyperlinks |
 | `@editor/extension-anchor` | `packages/extensions/anchor` | `<a id>` page anchors |
@@ -93,6 +96,9 @@ npm run dev          # http://localhost:5173
 | Extension | Import | Highlights |
 |---|---|---|
 | Styling | `Styling({ headingLevels })` | bold, italic, underline, strike, code, headings, lists, blockquote, code block, hr |
+| Align | `Align({ types })` | left / center / right / justify |
+| List styles | `ListStyles({ bullets, ordered })` | 123 / abc / ABC / i / I, disc / circle / square |
+| Color | `Color({ blockTypes })` | text color, highlight, block background |
 | History | `History()` | undo / redo with typing-burst coalescing |
 | Link | `Link({ openOnClick, autolink, linkOnPaste, onRequestUrl })` | safe `target`/`rel` defaults, host-provided URL dialog |
 | Anchor | `Anchor({ onRequestName })` | `slugify` + duplicate detection, `collectAnchorIds` |

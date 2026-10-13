@@ -1,9 +1,12 @@
 import { TextEditor } from '@editor/core'
+import { Align } from '@editor/extension-align'
 import { Anchor } from '@editor/extension-anchor'
+import { Color } from '@editor/extension-color'
 import { Comments, createCommentPanel } from '@editor/extension-comments'
 import { History } from '@editor/extension-history'
 import { ImageExtension } from '@editor/extension-image'
 import { Link } from '@editor/extension-link'
+import { ListStyles } from '@editor/extension-list-styles'
 import { normalizePastedHtml, PasteClean } from '@editor/extension-paste-clean'
 import { SourceView } from '@editor/extension-source-view'
 import { Styling } from '@editor/extension-styling'
@@ -58,6 +61,9 @@ const editor = new TextEditor({
     '<em>italic</em>, <u>underline</u> text.</p>',
   extensions: [
     Styling(),
+    Align(),
+    ListStyles(),
+    Color(),
     History(),
     Link({
       onRequestUrl: (current) =>
@@ -175,6 +181,50 @@ const menus: Menu[] = [
         label: 'Clear formatting',
         icon: 'clearFormatting',
         run: (e) => e.engine.chain().focus().unsetAllMarks().clearNodes().run(),
+      },
+    ],
+  },
+  {
+    label: 'Format',
+    items: [
+      {
+        label: 'Align left',
+        icon: 'alignLeft',
+        checked: (e) =>
+          !e.engine.isActive({ textAlign: 'center' }) &&
+          !e.engine.isActive({ textAlign: 'right' }) &&
+          !e.engine.isActive({ textAlign: 'justify' }),
+        run: (e) => e.engine.chain().focus().setTextAlign('left').run(),
+      },
+      {
+        label: 'Align center',
+        icon: 'alignCenter',
+        checked: (e) => e.engine.isActive({ textAlign: 'center' }),
+        run: (e) => e.engine.chain().focus().setTextAlign('center').run(),
+      },
+      {
+        label: 'Align right',
+        icon: 'alignRight',
+        checked: (e) => e.engine.isActive({ textAlign: 'right' }),
+        run: (e) => e.engine.chain().focus().setTextAlign('right').run(),
+      },
+      {
+        label: 'Justify',
+        icon: 'alignJustify',
+        checked: (e) => e.engine.isActive({ textAlign: 'justify' }),
+        run: (e) => e.engine.chain().focus().setTextAlign('justify').run(),
+      },
+      {
+        label: 'Clear color & highlight',
+        icon: 'clearFormatting',
+        separatorBefore: true,
+        run: (e) =>
+          e.engine.chain().focus().unsetTextColor().unsetTextHighlight().run(),
+      },
+      {
+        label: 'Clear block background',
+        icon: 'clearFormatting',
+        run: (e) => e.engine.chain().focus().setBlockBackground(null).run(),
       },
     ],
   },

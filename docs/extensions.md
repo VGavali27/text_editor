@@ -27,8 +27,8 @@ sanitizeHtml('<p>…</p>')                     // string in, sanitized string ou
 | `allowedSchemes` | `['http', 'https', 'mailto', 'tel']` | URL schemes allowed in `href`/`src` |
 | `normalize` | — | Pre-step applied *before* the allowlist (cannot bypass it) |
 
-Also exports `SanitizePaste(config)` (the raw ProseMirror extension) and
-`enforceUriAllowlist(element, schemes)`.
+Also exports `SanitizePaste(config)` (the raw ProseMirror extension),
+`enforceUriAllowlist(element, schemes)` and `enforceStyleAllowlist(element)`.
 
 ---
 
@@ -47,6 +47,34 @@ Write a custom extension by returning a `TextEditorExtension`. See
 A `ToolbarItem` may also set `icon` (a built-in icon name — see
 [Icons & menu bar](#icons--menu-bar)) and `shortcut` (a keyboard hint shown in
 tooltips and menus); both are optional and cosmetic.
+
+Controls can be more than buttons. Set `options` to render a `<select>`
+dropdown, or `type: 'color'` to render a native color input with a clear button:
+
+```ts
+const item: ToolbarItem = {
+  name: 'marker',
+  label: 'Marker style',
+  options: [                       // → <select aria-label="Marker style">
+    { value: 'disc', label: 'Disc' },
+    { value: 'circle', label: 'Circle' },
+  ],
+  value: (editor) => editor.engine.getAttributes('bulletList').listStyleType ?? 'disc',
+  isEnabled: (editor) => editor.engine.isActive('bulletList'),
+  run: (editor, value) => editor.engine.chain().focus().setBulletListStyle(value!).run(),
+}
+
+const colorItem: ToolbarItem = {
+  name: 'tint',
+  label: 'Tint',
+  type: 'color',                   // → <input type="color" aria-label="Tint">
+  icon: 'palette',
+  color: (editor) => editor.engine.getAttributes('textColor').color ?? null,
+  run: (editor, value) => { /* value is a #rrggbb string, or undefined to clear */ },
+}
+```
+
+`run` receives the selected `value` (dropdown/color) as its second argument.
 
 ---
 
@@ -190,6 +218,49 @@ See [review.md](review.md). Toolbar items `trackChanges`, `acceptChanges`,
 
 See [review.md](review.md). Toolbar item `addComment`; sidebar via
 `createCommentPanel`.
+
+---
+
+## `@editor/extension-align`
+
+```ts
+Align({ types: ['paragraph', 'heading'] })
+```
+
+Left / center / right / justify alignment, stored as a `textAlign` attribute on
+the configured block nodes and rendered as an inline `text-align` style. Toolbar
+items `alignLeft`, `alignCenter`, `alignRight`, `alignJustify`.
+Commands: `setTextAlign(align)`, `unsetTextAlign()`.
+
+---
+
+## `@editor/extension-list-styles`
+
+```ts
+ListStyles({ bullets: ['disc', 'circle', 'square'], ordered: ['decimal', …] })
+```
+
+Marker styles for bullet and ordered lists, stored as a `listStyleType` attribute
+and rendered inline. Ordered styles cover `123 / abc / ABC / i / I`
+(`decimal`, `lower-alpha`, `upper-alpha`, `lower-roman`, `upper-roman`); bullet
+styles cover filled / circle / square (`disc`, `circle`, `square`). Toolbar
+dropdowns `bulletStyle` and `orderedStyle`.
+Commands: `setBulletListStyle(style)`, `setOrderedListStyle(style)`.
+
+---
+
+## `@editor/extension-color`
+
+```ts
+Color({ blockTypes: ['paragraph', 'heading'] })
+```
+
+Text color, text highlight and block background, rendered as inline
+`color` / `background-color` styles that the [sanitizer](security.md) preserves.
+Toolbar controls `textColor`, `textHighlight`, `blockBackground` (native color
+inputs with a clear button). Commands: `setTextColor(color)`,
+`unsetTextColor()`, `setTextHighlight(color)`, `unsetTextHighlight()`,
+`setBlockBackground(color | null)`.
 
 ---
 

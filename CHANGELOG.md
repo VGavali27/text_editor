@@ -18,9 +18,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   arrow-key navigation, Home/End, Esc, click-outside), with live `disabled` /
   `checked` states.
 - **Styling**: new `code`, `codeBlock`, and `horizontalRule` toolbar items.
-- **Playground**: wires a `File` (New, Open HTML, Export HTML, Export JSON),
-  `Edit` (Undo, Redo, Select all, Clear formatting) and `Insert` (Link, Image,
-  Anchor, Divider, Comment) menu bar; imported HTML is sanitized on load.
+- **Dropdown + color controls**: `ToolbarItem` now supports `options` (renders a
+  `<select>`) and `type: 'color'` (renders a native color input with a clear
+  button); `run(editor, value?)` receives the selected value.
+- **Alignment** (`@editor/extension-align`): left / center / right / justify on
+  paragraphs and headings (inline `text-align`).
+- **List styles** (`@editor/extension-list-styles`): ordered `123 / abc / ABC /
+  i / I` and bullet `disc / circle / square` marker styles, as toolbar dropdowns.
+- **Color** (`@editor/extension-color`): text color, text highlight and block
+  background, as native color controls.
+- **Sanitizer**: `style` is now allowed but reduced by a deterministic
+  `enforceStyleAllowlist` hook to `color`, `background-color`, `text-align` and
+  `list-style-type` with validated values — colours survive paste without opening
+  a CSS injection path.
+- **Playground**: wires `Align()`, `ListStyles()` and `Color()` and adds a
+  `Format` menu (alignment + clear colour / highlight / block background).
 
 ## [1.0.0] - 2026-10-12
 

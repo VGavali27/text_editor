@@ -2,8 +2,21 @@ import type { AnyExtension, Editor as TiptapEditor } from '@tiptap/core'
 
 export type { TiptapEditor }
 
+/** One choice inside a dropdown control. */
+export interface ToolbarOption {
+  /** Value passed to `run` when chosen. */
+  value: string
+  /** Visible text. */
+  label: string
+  /** Optional leading icon name. */
+  icon?: string
+}
+
 /**
  * A button / control contributed by an extension and rendered by the UI shell.
+ *
+ * Defaults to a button. Set `options` to render a `<select>` dropdown, or
+ * `type: 'color'` to render a color swatch input.
  */
 export interface ToolbarItem {
   /** Stable identifier, also used as the default button label key. */
@@ -16,15 +29,24 @@ export interface ToolbarItem {
   icon?: string
   /** Optional keyboard hint shown in tooltips (e.g. `Ctrl+B`). */
   shortcut?: string
+  /** When present, render a dropdown of choices instead of a button. */
+  options?: ToolbarOption[]
+  /** Current dropdown value, re-read on every refresh. */
+  value?: (editor: TiptapEditor) => string | null
+  /** Control kind. Defaults to `'button'`. */
+  type?: 'button' | 'color'
+  /** Current color (CSS value) for `type: 'color'`, re-read on every refresh. */
+  color?: (editor: TiptapEditor) => string | null
   /** Whether the control reflects the current selection. */
   isActive?: (editor: TiptapEditor) => boolean
   /** Whether the control can currently be used. */
   isEnabled?: (editor: TiptapEditor) => boolean
   /**
-   * Execute the command. Async work should be kicked off internally (the UI
-   * does not await it), e.g. `void (async () => { … })()`.
+   * Execute the command. For dropdown / color controls the chosen value is
+   * passed as the second argument (`''` means "clear"). Async work should be
+   * kicked off internally (the UI does not await it).
    */
-  run: (editor: TiptapEditor) => void
+  run: (editor: TiptapEditor, value?: string) => void
 }
 
 /**

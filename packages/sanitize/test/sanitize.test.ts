@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { enforceUriAllowlist, sanitizeHtml } from '@editor/sanitize'
+import { enforceStyleAllowlist, enforceUriAllowlist, sanitizeHtml } from '@editor/sanitize'
 
 /**
  * OWASP XSS filter-evasion cheat-sheet style payloads. Every one of these must
@@ -172,6 +172,57 @@ describe('enforceUriAllowlist', () => {
     expect(element.querySelector('#c')?.getAttribute('href')).toBe('#anchor')
     expect(element.querySelector('#d')?.getAttribute('href')).toBe('https://ok.example')
     expect(element.querySelector('#e')?.hasAttribute('src')).toBe(false)
+  })
+})
+
+describe('sanitizeHtml: inline styles', () => {
+  it('keeps the editor’s own style properties', () => {
+    const html = sanitizeHtml(
+      '<p style="text-align: center; background-color: #eeeeee">' +
+        '<span style="color: rgb(255, 0, 0)">red</span>' +
+        '<span style="background-color: yellow">hi</span>' +
+        '</p>' +
+        '<ol style="list-style-type: upper-roman"><li>a</li></ol>',
+    )
+    expect(html).toContain('text-align: center')
+    expect(html).toContain('background-color: #eeeeee')
+    expect(html).toContain('color: rgb(255, 0, 0)')
+    expect(html).toContain('background-color: yellow')
+    expect(html).toContain('list-style-type: upper-roman')
+  })
+
+  it('drops every other declaration, including dangerous ones', () => {
+    const html = sanitizeHtml(
+      '<p style="position: fixed; top: 0; color: red; background-image: url(javascript:alert(1));' +
+        ' width: expression(alert(1)); text-align: center">x</p>',
+    )
+    expect(html).toBe('<p style="color: red; text-align: center">x</p>')
+  })
+
+  it('rejects invalid values for allowed properties (incl. !important)', () => {
+    const html = sanitizeHtml(
+      '<span style="color: expression(alert(1))">a</span>' +
+        '<span style="text-align: url(evil)">b</span>' +
+        '<span style="list-style-type: wiggly">c</span>' +
+        '<span style="color: red !important">d</span>',
+    )
+    expect(html).not.toContain('style=')
+  })
+})
+
+describe('enforceStyleAllowlist', () => {
+  it('filters a style attribute in place', () => {
+    const element = document.createElement('span')
+    element.setAttribute('style', 'color: #123456; position: absolute; text-align: right')
+    enforceStyleAllowlist(element)
+    expect(element.getAttribute('style')).toBe('color: #123456; text-align: right')
+  })
+
+  it('removes the attribute entirely when nothing is allowed', () => {
+    const element = document.createElement('span')
+    element.setAttribute('style', 'position: absolute; border: 1px')
+    enforceStyleAllowlist(element)
+    expect(element.hasAttribute('style')).toBe(false)
   })
 })
 

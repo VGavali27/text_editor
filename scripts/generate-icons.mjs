@@ -28,6 +28,15 @@ const MAP = {
   blockquote: 'text-quote',
   hr: 'minus',
   clearFormatting: 'remove-formatting',
+  // alignment
+  alignLeft: 'align-left',
+  alignCenter: 'align-center',
+  alignRight: 'align-right',
+  alignJustify: 'align-justify',
+  // color
+  palette: 'palette',
+  highlighter: 'highlighter',
+  paintBucket: 'paint-bucket',
   // history / editing
   undo: 'undo-2',
   redo: 'redo-2',
